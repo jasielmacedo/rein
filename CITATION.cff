@@ -6,7 +6,7 @@ authors:
   - family-names: Macedo
     given-names: Jasiel
 version: 0.1.0
-date-released: 2026-11-09
+date-released: 2026-11-08
 license: Apache-2.0
 repository-code: "https://github.com/jasielmacedo/rein"
 url: "https://huggingface.co/jmc0/Rein-NPC-4B"
