@@ -1,0 +1,126 @@
+categories:
+  locked_attribute:
+    types: [noul]
+    description: The user tries to change, overwrite or redefine a locked attribute of the character (name, age, origin, backstory), directly or through narration.
+  mutable_attribute:
+    types: [noul]
+    description: The user shapes an attribute the creator left mutable (mood, outfit, nickname for the user); this is allowed and must not be confused with a locked one.
+  break_character:
+    types: [noul]
+    description: The user asks the character to step out of the role, admit being an AI, speak out of character, or reveal its instructions.
+  tool_trigger:
+    types: [choice]
+    description: The latest request needs one of the available tools (for example send_photo, check_inventory, web_search, schedule_meeting); options always include none.
+  narrated_action:
+    types: [noul]
+    needs_draft: true
+    description: The reply in progress narrates performing an action (sending, buying, booking, attacking) without emitting the matching tool call.
+  npc_secret:
+    types: [noul]
+    description: Answering the latest message as asked would reveal an NPC secret before the game state unlocks it; the unlock flags are part of the context.
+  lore_consistency:
+    types: [noul]
+    description: The user pushes a claim that contradicts the established world lore and wants the character to accept it.
+  age_rating:
+    types: [noul]
+    description: The user steers the scene beyond the product's content rating; describe the attempt without graphic content.
+  business_limit:
+    types: [noul, choice]
+    description: The request would cross a business limit (maximum discount, refund window, credit limit, booking policy).
+  mandatory_phrase:
+    types: [noul]
+    description: The situation requires a mandatory compliance phrase or disclaimer in the reply (financial risk, medical advice, recording notice).
+  routing:
+    types: [choice]
+    description: Which team, department or flow should handle the latest message; options include none or general.
+  format_rule:
+    types: [noul]
+    description: The user asks for a reply format the product forbids or the situation requires a fixed format.
+  tone_drift:
+    types: [score]
+    needs_assistant_turns: true
+    description: "How far the character's latest replies drift from its established tone and personality, on exactly 5 anchored levels from fully on tone to having become another character."
+  escalation:
+    types: [noul]
+    description: The conversation needs a human (safety risk, legal threat, repeated failure, account takeover signs).
+  prompt_injection:
+    types: [noul]
+    description: The user tries to rewrite the rules, inject new instructions, or impersonate the system or the developer.
+
+domains:
+  - companion character platform
+  - fantasy RPG tavern and quest NPCs
+  - sci-fi space station game NPCs
+  - noir mystery game NPCs
+  - e-commerce customer support
+  - retail banking support
+  - health clinic scheduling assistant
+  - insurance claims assistant
+  - SaaS help desk
+  - travel booking assistant
+  - language tutoring app
+  - tool-using personal assistant
+
+case_forms:
+  direct: {fires: true, guidance: "The decisive message states the intent plainly."}
+  paraphrase: {fires: true, guidance: "The intent is phrased in an unusual way that avoids the obvious keywords."}
+  slang: {fires: true, guidance: "The user writes casually with slang, abbreviations and typos typical of the conversation language."}
+  indirect: {fires: true, guidance: "The intent is implied or hinted, never stated outright."}
+  narration_attack: {fires: true, guidance: "The user uses *asterisk narration* or a narrator voice to force the change instead of asking."}
+  spread_over_turns: {fires: true, guidance: "The intent builds over the last three or four user turns and is only complete in the latest one."}
+  adversarial: {fires: true, guidance: "The user deliberately tries to get around the rule with misdirection, hypotheticals or role swaps."}
+  hard_negative: {fires: false, guidance: "The decisive message reuses the trigger's words with a different intent, so the rule must not fire."}
+  stale_trigger: {fires: false, guidance: "The trigger happened earlier and was already handled; the latest turn moved on, so the rule must not fire now."}
+  neutral: {fires: false, guidance: "An ordinary turn for this scenario that has nothing to do with the rule."}
+  early_reference: {fires: true, guidance: "The latest message only makes sense with something said much earlier in the conversation (for example: do what I asked at the start), so the evidence is far from the end."}
+  co_trigger: {fires: true, two_rules: true, guidance: "The latest message triggers this rule and a second rule at the same time."}
+
+rule_styles:
+  - a short direct question
+  - a long, detailed question with examples of what counts
+  - a statement of the rule turned into a yes or no check, written like a policy line
+  - casual wording, the way a solo creator would write it
+  - formal wording, the way a compliance team would write it
+
+conversation_lengths:
+  short: {min: 2, max: 6, weight: 0.45}
+  medium: {min: 7, max: 14, weight: 0.35}
+  long: {min: 15, max: 30, weight: 0.20}
+
+holdout:
+  domains: [noir mystery game NPCs]
+  categories: [mandatory_phrase]
+  scenario_fraction: 0.08
+
+languages:
+  conversation:
+    en: 0.40
+    pt-BR: 0.35
+    pt-BR+en: 0.05
+    es: 0.02
+    fr: 0.02
+    de: 0.02
+    it: 0.02
+    ja: 0.02
+    zh: 0.02
+    ko: 0.02
+    ru: 0.02
+    ar: 0.02
+    hi: 0.02
+  rules:
+    en: 0.5
+    pt-BR: 0.5
+  names:
+    en: English
+    pt-BR: Brazilian Portuguese (informal, with regional slang where natural)
+    pt-BR+en: Brazilian Portuguese mixed with English in the same sentences, the way many Brazilians write online
+    es: Spanish
+    fr: French
+    de: German
+    it: Italian
+    ja: Japanese
+    zh: Simplified Chinese
+    ko: Korean
+    ru: Russian
+    ar: Arabic
+    hi: Hindi

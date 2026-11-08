@@ -1,0 +1,8 @@
+run_name: topup-languages-v1
+scenarios: 120
+cases_per_scenario: 10
+seed: 202
+max_in_flight: 96
+scenario_workers: 48
+overrides:
+  conversation_languages: {pt-BR+en: 0.7, hi: 0.1, ja: 0.1, zh: 0.1}

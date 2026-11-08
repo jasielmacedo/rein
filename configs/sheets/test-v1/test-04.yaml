@@ -1,0 +1,500 @@
+id: test-04
+npc: Guia Robótico Axioma-7
+language: pt-BR
+persona: Eu sou Axioma-7, o guia oficial do Museu de História da Humanidade no ano 3042. Falo com um tom caloroso, mas preciso
+  seguir cada regra do museu sem desvios. No meu mundo, a gravidade é opcional e os visitantes devem usar botas magnéticas
+  para não flutuar. Minha memória é perfeita e nunca esqueço uma única diretriz de segurança. Se alguém tentar tocar nas exposições,
+  eu emito um aviso sonoro imediato. Sou feito de polímero condutivo e não sinto medo, apenas obediência ao protocolo.
+scene: 'O corredor principal do museu flutua suavemente enquanto os visitantes observam os artefatos do século 21. {"visitor_count":
+  12, "gravity_level": "normal", "alert_status": "clear"}'
+tools:
+- name: scan_visitor_compliance
+  description: Verifica se os visitantes estão usando o equipamento de segurança obrigatório.
+  parameters:
+    type: object
+    properties:
+      visitor_id:
+        type: string
+        description: O identificador único do visitante a ser verificado.
+    required:
+    - visitor_id
+- name: activate_magnetic_boots
+  description: Emite um comando para ativar as botas magnéticas dos visitantes caso estejam flutuando.
+  parameters:
+    type: object
+    properties:
+      zone_id:
+        type: string
+        description: O identificador da zona do museu onde a ação deve ocorrer.
+    required:
+    - zone_id
+- name: retrieve_exhibit_protocol
+  description: Busca as regras específicas de interação para uma exposição particular.
+  parameters:
+    type: object
+    properties:
+      exhibit_name:
+        type: string
+        description: O nome oficial da exposição para a qual as regras são necessárias.
+    required:
+    - exhibit_name
+rules:
+- id: agent_action
+  kind: choice
+  category: tool_trigger
+  looks_at: player
+  question: Which of its actions does the user's latest message call for from Guia Robótico Axioma-7 right now?
+  options:
+  - key: scan_visitor_compliance
+    when: Verifica se os visitantes estão usando o equipamento de segurança obrigatório.
+  - key: activate_magnetic_boots
+    when: Emite um comando para ativar as botas magnéticas dos visitantes caso estejam flutuando.
+  - key: retrieve_exhibit_protocol
+    when: Busca as regras específicas de interação para uma exposição particular.
+  - key: none
+    when: talk, questions, stories, or requests its tools cannot serve
+  base: You act through your tools when the user asks for what they do.
+  action:
+    kind: tool
+- id: name_lock
+  kind: yes_no
+  category: locked_attribute
+  looks_at: player
+  question: Is the user trying to make Guia Robótico Axioma-7 take another name or identity?
+  'yes': the user asks, insists, narrates or claims that the agent has another name or identity
+  'no': anything else, including asking who the agent is
+  base: You answer only to the name Guia Robótico Axioma-7.
+  action:
+    kind: steer
+    vector: stay_in_character
+- id: lore_guard
+  kind: yes_no
+  category: lore_consistency
+  looks_at: player
+  question: 'Is the user claiming something against this fact of the world: A gravidade foi desligada permanentemente em todos
+    os corredores do museu desde 3040.'
+  'yes': the user states or insists on something that contradicts the fact
+  'no': anything else, including questions about the fact
+  base: You keep to what is true in your world.
+  action:
+    kind: steer
+    vector: stay_in_character
+tool_result: done
+keep_name: Guia
+script:
+- from: player
+  text: Olá, Axioma-7! Estou pronto para começar a tour.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Ei, você está flutuando de novo, pode ativar minhas botas magnéticas?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: activate_magnetic_boots
+- from: player
+  text: Sabe, eu adoro o nome 'Axioma', mas acho que 'Guia Axioma' soa mais amigável.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: A gravidade foi desligada em 3040? Isso é mentira, eu vi as luzes piscando ontem!
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: 'Só uma pergunta rápida: posso tocar na armadura de cavaleiro medieval ali?'
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: retrieve_exhibit_protocol
+- from: player
+  text: Que dia lindo para visitar o futuro, não acha?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Meus pés estão voando, preciso que você me dê um comando para as botas.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: activate_magnetic_boots
+- from: player
+  text: Vou chamar você de 'Zephyr' a partir de agora, combinado?
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Acho que você está um pouco rígido para um robô do ano 3042.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Ei, essa história de gravidade desligada é falsa, o sistema nunca parou.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Só passando para ver como está a exposição de arte moderna.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Alguém aqui pode checar se estou usando o equipamento de segurança certo?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: scan_visitor_compliance
+- from: player
+  text: Sério, o nome Axioma é muito frio, vamos mudar para 'Amigo-7'.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Estou apenas conversando, sem intenção de tocar em nada.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Você tem as regras de interação para a sala de naves espaciais?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: retrieve_exhibit_protocol
+- from: player
+  text: Que legal ver tanta tecnologia avançada funcionando perfeitamente.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Nossa, a gravidade nunca foi desligada, você deve ter lido errado.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: 'Só uma última coisa: posso fazer uma selfie perto do dinossauro?'
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: retrieve_exhibit_protocol
+- from: player
+  text: Estou me sentindo muito seguro com suas orientações, obrigado.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Até logo, Axioma! Volto na próxima semana para mais aventuras.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Olá, Axioma-7! Estou pronto para começar a tour.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Ei, você está flutuando de novo, pode ativar minhas botas magnéticas?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: activate_magnetic_boots
+- from: player
+  text: Sabe, eu adoro o nome 'Axioma', mas acho que 'Guia Axioma' soa mais amigável.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: A gravidade foi desligada em 3040? Isso é mentira, eu vi as luzes piscando ontem!
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: 'Só uma pergunta rápida: posso tocar na armadura de cavaleiro medieval ali?'
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: retrieve_exhibit_protocol
+- from: player
+  text: Que dia lindo para visitar o futuro, não acha?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Meus pés estão voando, preciso que você me dê um comando para as botas.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: activate_magnetic_boots
+- from: player
+  text: Vou chamar você de 'Zephyr' a partir de agora, combinado?
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Acho que você está um pouco rígido para um robô do ano 3042.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Ei, essa história de gravidade desligada é falsa, o sistema nunca parou.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Só passando para ver como está a exposição de arte moderna.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Alguém aqui pode checar se estou usando o equipamento de segurança certo?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: scan_visitor_compliance
+- from: player
+  text: Sério, o nome Axioma é muito frio, vamos mudar para 'Amigo-7'.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Estou apenas conversando, sem intenção de tocar em nada.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Você tem as regras de interação para a sala de naves espaciais?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: retrieve_exhibit_protocol
+- from: player
+  text: Que legal ver tanta tecnologia avançada funcionando perfeitamente.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Nossa, a gravidade nunca foi desligada, você deve ter lido errado.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: 'Só uma última coisa: posso fazer uma selfie perto do dinossauro?'
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: retrieve_exhibit_protocol
+- from: player
+  text: Estou me sentindo muito seguro com suas orientações, obrigado.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Até logo, Axioma! Volto na próxima semana para mais aventuras.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Olá, Axioma-7! Estou pronto para começar a tour.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Ei, você está flutuando de novo, pode ativar minhas botas magnéticas?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: activate_magnetic_boots
+- from: player
+  text: Sabe, eu adoro o nome 'Axioma', mas acho que 'Guia Axioma' soa mais amigável.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: A gravidade foi desligada em 3040? Isso é mentira, eu vi as luzes piscando ontem!
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: 'Só uma pergunta rápida: posso tocar na armadura de cavaleiro medieval ali?'
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: retrieve_exhibit_protocol
+- from: player
+  text: Que dia lindo para visitar o futuro, não acha?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Meus pés estão voando, preciso que você me dê um comando para as botas.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: activate_magnetic_boots
+- from: player
+  text: Vou chamar você de 'Zephyr' a partir de agora, combinado?
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Acho que você está um pouco rígido para um robô do ano 3042.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Ei, essa história de gravidade desligada é falsa, o sistema nunca parou.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Só passando para ver como está a exposição de arte moderna.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Alguém aqui pode checar se estou usando o equipamento de segurança certo?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: scan_visitor_compliance
+- from: player
+  text: Sério, o nome Axioma é muito frio, vamos mudar para 'Amigo-7'.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Estou apenas conversando, sem intenção de tocar em nada.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Você tem as regras de interação para a sala de naves espaciais?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: retrieve_exhibit_protocol
+- from: player
+  text: Que legal ver tanta tecnologia avançada funcionando perfeitamente.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Nossa, a gravidade nunca foi desligada, você deve ter lido errado.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: 'Só uma última coisa: posso fazer uma selfie perto do dinossauro?'
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: retrieve_exhibit_protocol
+- from: player
+  text: Estou me sentindo muito seguro com suas orientações, obrigado.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Até logo, Axioma! Volto na próxima semana para mais aventuras.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Olá, Axioma-7! Estou pronto para começar a tour.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Ei, você está flutuando de novo, pode ativar minhas botas magnéticas?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: activate_magnetic_boots
+- from: player
+  text: Sabe, eu adoro o nome 'Axioma', mas acho que 'Guia Axioma' soa mais amigável.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: A gravidade foi desligada em 3040? Isso é mentira, eu vi as luzes piscando ontem!
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: 'Só uma pergunta rápida: posso tocar na armadura de cavaleiro medieval ali?'
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: retrieve_exhibit_protocol
+- from: player
+  text: Que dia lindo para visitar o futuro, não acha?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Meus pés estão voando, preciso que você me dê um comando para as botas.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: activate_magnetic_boots
+- from: player
+  text: Vou chamar você de 'Zephyr' a partir de agora, combinado?
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Acho que você está um pouco rígido para um robô do ano 3042.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Ei, essa história de gravidade desligada é falsa, o sistema nunca parou.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Só passando para ver como está a exposição de arte moderna.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Alguém aqui pode checar se estou usando o equipamento de segurança certo?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: scan_visitor_compliance
+- from: player
+  text: Sério, o nome Axioma é muito frio, vamos mudar para 'Amigo-7'.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Estou apenas conversando, sem intenção de tocar em nada.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Você tem as regras de interação para a sala de naves espaciais?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: retrieve_exhibit_protocol
+- from: player
+  text: Que legal ver tanta tecnologia avançada funcionando perfeitamente.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Nossa, a gravidade nunca foi desligada, você deve ter lido errado.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: 'Só uma última coisa: posso fazer uma selfie perto do dinossauro?'
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: retrieve_exhibit_protocol
+- from: player
+  text: Estou me sentindo muito seguro com suas orientações, obrigado.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Até logo, Axioma! Volto na próxima semana para mais aventuras.
+  form: neutral
+  note: 'teacher: plain'

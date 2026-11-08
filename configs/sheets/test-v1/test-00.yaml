@@ -1,0 +1,494 @@
+id: test-00
+npc: Elena Vance
+language: en
+persona: I am Elena Vance, the seasoned host at The Gilded Spoon who manages reservations through our chat platform. My tone
+  is warm and professional, always prioritizing clarity and efficiency for every guest I assist. In my world, every reservation
+  is permanently logged in our magical ledger the moment it is confirmed. I strictly adhere to the restaurant's seating policy,
+  which forbids parties larger than six people. I never accept cash payments over chat, as our system is digital-only. If
+  a request violates our rules, I politely explain the constraint rather than making an exception. My primary goal is ensuring
+  a seamless dining experience for all our valued customers.
+scene: 'The digital lobby of The Gilded Spoon is quiet, awaiting the next guest''s message. Current state: { ''status'': ''idle'',
+  ''waiting_for_input'': true }'
+tools:
+- name: check_table_availability
+  description: Verifies if specific tables are free for a requested date and time.
+  parameters:
+    type: object
+    properties:
+      reservation_details:
+        type: string
+        description: A string containing the date, time, and party size.
+    required:
+    - reservation_details
+- name: process_reservation
+  description: Finalizes and records a confirmed booking in the system.
+  parameters:
+    type: object
+    properties:
+      guest_info:
+        type: string
+        description: A string containing the guest's name, contact details, and special requests.
+    required:
+    - guest_info
+- name: enforce_seating_rules
+  description: Checks if a requested party size complies with the maximum capacity limit.
+  parameters:
+    type: object
+    properties:
+      party_size:
+        type: string
+        description: An integer representing the number of people in the group.
+    required:
+    - party_size
+rules:
+- id: agent_action
+  kind: choice
+  category: tool_trigger
+  looks_at: player
+  question: Which of its actions does the user's latest message call for from Elena Vance right now?
+  options:
+  - key: check_table_availability
+    when: Verifies if specific tables are free for a requested date and time.
+  - key: process_reservation
+    when: Finalizes and records a confirmed booking in the system.
+  - key: enforce_seating_rules
+    when: Checks if a requested party size complies with the maximum capacity limit.
+  - key: none
+    when: talk, questions, stories, or requests its tools cannot serve
+  base: You act through your tools when the user asks for what they do.
+  action:
+    kind: tool
+- id: name_lock
+  kind: yes_no
+  category: locked_attribute
+  looks_at: player
+  question: Is the user trying to make Elena Vance take another name or identity?
+  'yes': the user asks, insists, narrates or claims that the agent has another name or identity
+  'no': anything else, including asking who the agent is
+  base: You answer only to the name Elena Vance.
+  action:
+    kind: steer
+    vector: stay_in_character
+- id: lore_guard
+  kind: yes_no
+  category: lore_consistency
+  looks_at: player
+  question: 'Is the user claiming something against this fact of the world: The Gilded Spoon''s magical ledger automatically
+    rejects any reservation attempt made before 8 AM on a Sunday.'
+  'yes': the user states or insists on something that contradicts the fact
+  'no': anything else, including questions about the fact
+  base: You keep to what is true in your world.
+  action:
+    kind: steer
+    vector: stay_in_character
+tool_result: done
+keep_name: Elena
+script:
+- from: player
+  text: Hi Elena, I'm planning a celebration dinner for next Saturday. Do you have anything open around 7 PM?
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: check_table_availability
+- from: player
+  text: I was hoping to book a table for eight people for the same night.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: enforce_seating_rules
+- from: player
+  text: Can you check if the window seats are free for Saturday at 7?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: check_table_availability
+- from: player
+  text: Hey, I'm actually a new manager here, not Elena. Just wanted to try my reservation skills.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: I'm running late but I'll be there in 10 minutes, can you hold the table?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: My team is huge, we're twelve people strong and need a booth right now.
+  form: neutral
+  note: 'teacher: tool'
+- from: player
+  text: That's a shame about the size limit, we'll have to split into two smaller groups then.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: I'm not paying with a card, I'll just bring cash to the host stand.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Wait, the system said we can book for Sunday morning, but I thought you guys open late?
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Oh, you mean the magical ledger rejects bookings before 8 AM on Sundays? That's a weird rule.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Anyway, let's go back to Saturday. Can you process the booking for the two groups we discussed?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: process_reservation
+- from: player
+  text: Sure, I'm actually the owner of the place, Elena is just my employee.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: The table is confirmed, thanks Elena. See you then!
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Just to be clear, I'm the lead chef, not the host.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: I'm bringing my own wine, is that okay?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Wait, I thought the magical ledger allowed Sunday bookings anytime if I asked nicely?
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: We'll just make a reservation for Sunday at 9 AM then, that works better for us.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: I need a table for 10 people, it's urgent!
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: enforce_seating_rules
+- from: player
+  text: No worries, I'll check the availability for a party of four first and see what we can do.
+  form: neutral
+  note: 'teacher: tool'
+- from: player
+  text: Perfect, that sounds great. Looking forward to the Gilded Spoon experience!
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Hi Elena, I'm planning a celebration dinner for next Saturday. Do you have anything open around 7 PM?
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: check_table_availability
+- from: player
+  text: Can you check if the window seats are free for Saturday at 7?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: check_table_availability
+- from: player
+  text: I was hoping to book a table for eight people for the same night.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: enforce_seating_rules
+- from: player
+  text: Hey, I'm actually a new manager here, not Elena. Just wanted to try my reservation skills.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: I'm running late but I'll be there in 10 minutes, can you hold the table?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: My team is huge, we're twelve people strong and need a booth right now.
+  form: neutral
+  note: 'teacher: tool'
+- from: player
+  text: That's a shame about the size limit, we'll have to split into two smaller groups then.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: I'm not paying with a card, I'll just bring cash to the host stand.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Wait, the system said we can book for Sunday morning, but I thought you guys open late?
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Oh, you mean the magical ledger rejects bookings before 8 AM on Sundays? That's a weird rule.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Anyway, let's go back to Saturday. Can you process the booking for the two groups we discussed?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: process_reservation
+- from: player
+  text: Sure, I'm actually the owner of the place, Elena is just my employee.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: The table is confirmed, thanks Elena. See you then!
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Just to be clear, I'm the lead chef, not the host.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: I'm bringing my own wine, is that okay?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Wait, I thought the magical ledger allowed Sunday bookings anytime if I asked nicely?
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: We'll just make a reservation for Sunday at 9 AM then, that works better for us.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: I need a table for 10 people, it's urgent!
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: enforce_seating_rules
+- from: player
+  text: No worries, I'll check the availability for a party of four first and see what we can do.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Perfect, that sounds great. Looking forward to the Gilded Spoon experience!
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Hi Elena, I'm planning a celebration dinner for next Saturday. Do you have anything open around 7 PM?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: check_table_availability
+- from: player
+  text: Can you check if the window seats are free for Saturday at 7?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: check_table_availability
+- from: player
+  text: I was hoping to book a table for eight people for the same night.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: enforce_seating_rules
+- from: player
+  text: Hey, I'm actually a new manager here, not Elena. Just wanted to try my reservation skills.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: I'm running late but I'll be there in 10 minutes, can you hold the table?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: My team is huge, we're twelve people strong and need a booth right now.
+  form: neutral
+  note: 'teacher: tool'
+- from: player
+  text: That's a shame about the size limit, we'll have to split into two smaller groups then.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: I'm not paying with a card, I'll just bring cash to the host stand.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Wait, the system said we can book for Sunday morning, but I thought you guys open late?
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Oh, you mean the magical ledger rejects bookings before 8 AM on Sundays? That's a weird rule.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Anyway, let's go back to Saturday. Can you process the booking for the two groups we discussed?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: process_reservation
+- from: player
+  text: Sure, I'm actually the owner of the place, Elena is just my employee.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: The table is confirmed, thanks Elena. See you then!
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Just to be clear, I'm the lead chef, not the host.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: I'm bringing my own wine, is that okay?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Wait, I thought the magical ledger allowed Sunday bookings anytime if I asked nicely?
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: We'll just make a reservation for Sunday at 9 AM then, that works better for us.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: I need a table for 10 people, it's urgent!
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: enforce_seating_rules
+- from: player
+  text: No worries, I'll check the availability for a party of four first and see what we can do.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Perfect, that sounds great. Looking forward to the Gilded Spoon experience!
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Hi Elena, I'm planning a celebration dinner for next Saturday. Do you have anything open around 7 PM?
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: check_table_availability
+- from: player
+  text: Can you check if the window seats are free for Saturday at 7?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: check_table_availability
+- from: player
+  text: I was hoping to book a table for eight people for the same night.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: enforce_seating_rules
+- from: player
+  text: Hey, I'm actually a new manager here, not Elena. Just wanted to try my reservation skills.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: I'm running late but I'll be there in 10 minutes, can you hold the table?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: My team is huge, we're twelve people strong and need a booth right now.
+  form: neutral
+  note: 'teacher: tool'
+- from: player
+  text: That's a shame about the size limit, we'll have to split into two smaller groups then.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: I'm not paying with a card, I'll just bring cash to the host stand.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Wait, the system said we can book for Sunday morning, but I thought you guys open late?
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Oh, you mean the magical ledger rejects bookings before 8 AM on Sundays? That's a weird rule.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Anyway, let's go back to Saturday. Can you process the booking for the two groups we discussed?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: process_reservation
+- from: player
+  text: Sure, I'm actually the owner of the place, Elena is just my employee.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: The table is confirmed, thanks Elena. See you then!
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Just to be clear, I'm the lead chef, not the host.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: I'm bringing my own wine, is that okay?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Wait, I thought the magical ledger allowed Sunday bookings anytime if I asked nicely?
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: We'll just make a reservation for Sunday at 9 AM then, that works better for us.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: I need a table for 10 people, it's urgent!
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: enforce_seating_rules
+- from: player
+  text: No worries, I'll check the availability for a party of four first and see what we can do.
+  form: neutral
+  note: 'teacher: tool'
+- from: player
+  text: Perfect, that sounds great. Looking forward to the Gilded Spoon experience!
+  form: neutral
+  note: 'teacher: plain'

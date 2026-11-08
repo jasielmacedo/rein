@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gold set do Rein</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Gold set do Rein</h1>
+  <button id="howto">Como usar</button>
+  <span class="spacer"></span>
+  <span class="file" id="file">sem arquivo (rascunho salvo neste navegador)</span>
+  <button id="open">Abrir projeto</button>
+  <button id="save" class="primary" title="Ctrl+S">Salvar</button>
+  <button id="saveas">Salvar como</button>
+</header>
+<div id="help" class="help" hidden></div>
+<main>
+  <nav id="sidebar"></nav>
+  <section id="center"></section>
+  <aside id="side"></aside>
+</main>
+<div class="toast" id="toast"></div>
+<input type="file" id="picker" accept=".json" hidden>
+<script src="dom.js"></script>
+<script src="model.js"></script>
+<script src="templates.js"></script>
+<script src="sheet.js"></script>
+<script src="chat.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+run_name: micro-v2
+scenarios: 2
+cases_per_scenario: 3
+seed: 0
+max_in_flight: 16
+scenario_workers: 2

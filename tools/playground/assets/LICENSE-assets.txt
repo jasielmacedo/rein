@@ -1,0 +1,2 @@
+Sprites and tiles: "Zelda-like tilesets and sprites" by ArMM1998, Creative Commons CC0 (public domain).
+Source: https://opengameart.org/content/zelda-like-tilesets-and-sprites (gfx_3.zip: character.png, Overworld.png).

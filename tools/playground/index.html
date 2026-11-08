@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rein-NPC playground</title>
+    <meta
+      name="description"
+      content="Walk through a small town and talk to three NPCs driven by Rein-NPC-4B, running in your browser. One GGUF file talks and decides."
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Rein-NPC playground</h1>
+      <p>
+        Three characters, one 4B model running in your browser. The model writes the lines <em>and</em> decides when a
+        tool is needed, when a name is being rewritten, when a fact of the world is under attack. Under every reply you
+        see its decisions and what the game did with them.
+      </p>
+    </header>
+    <main>
+      <section class="world-column">
+        <canvas id="world" aria-label="The town of Thornwall"></canvas>
+        <div class="controls">
+          <div id="characters" class="characters"></div>
+          <p class="help">Click a character on the map, or one of the buttons, to talk. They wander about on their own.</p>
+        </div>
+        <div id="state" class="state"></div>
+      </section>
+      <aside>
+        <section id="model" class="panel"></section>
+        <section id="chat" class="panel chat"></section>
+      </aside>
+    </main>
+    <footer>
+      <p>
+        Everything runs on your machine through <a href="https://github.com/ngxson/wllama">wllama</a> (llama.cpp in
+        WebAssembly and WebGPU). Nothing you type leaves the browser. Model:
+        <a href="https://huggingface.co/jmc0/Rein-NPC-4B">Rein-NPC-4B</a>, Apache-2.0. Pixel art:
+        <a href="https://opengameart.org/content/zelda-like-tilesets-and-sprites">Zelda-like tilesets and sprites</a>
+        by ArMM1998, CC0.
+      </p>
+    </footer>
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>

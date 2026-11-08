@@ -1,0 +1,379 @@
+{
+  "items": 1352,
+  "dropped_items": {
+    "rein": 0
+  },
+  "latency": {},
+  "cells": {
+    "all|rein": {
+      "n": 1352.0,
+      "accuracy": 0.9238165680473372,
+      "ece": 0.025486050845955954,
+      "brier": 0.11169671368878653,
+      "nll": 0.19468158103650712,
+      "coverage_at_gate": 0.8764792899408284,
+      "accuracy_at_gate": 0.9670886075949368
+    },
+    "unseen_rules|rein": {
+      "n": 1352.0,
+      "accuracy": 0.9238165680473372,
+      "ece": 0.025486050845955954,
+      "brier": 0.11169671368878653,
+      "nll": 0.19468158103650712,
+      "coverage_at_gate": 0.8764792899408284,
+      "accuracy_at_gate": 0.9670886075949368
+    },
+    "unseen_target_rule|rein": {
+      "n": 155.0,
+      "accuracy": 0.9419354838709677,
+      "ece": 0.06117812433550435,
+      "brier": 0.10570408260784625,
+      "nll": 0.1755177497881186,
+      "coverage_at_gate": 0.7935483870967742,
+      "accuracy_at_gate": 0.991869918699187
+    },
+    "holdout_domain_or_category|rein": {
+      "n": 0.0,
+      "accuracy": NaN,
+      "ece": NaN,
+      "brier": NaN,
+      "nll": NaN,
+      "coverage_at_gate": NaN,
+      "accuracy_at_gate": NaN
+    },
+    "words_same_intent_same|rein": {
+      "n": 56.0,
+      "accuracy": 0.9642857142857143,
+      "ece": 0.08547475934028625,
+      "brier": 0.10888600600115102,
+      "nll": 0.184382344457325,
+      "coverage_at_gate": 0.6964285714285714,
+      "accuracy_at_gate": 1.0
+    },
+    "words_same_intent_different|rein": {
+      "n": 1.0,
+      "accuracy": 1.0,
+      "ece": 0.04289388656616211,
+      "brier": 0.003186171652628228,
+      "nll": 0.043841012344989126,
+      "coverage_at_gate": 1.0,
+      "accuracy_at_gate": 1.0
+    },
+    "words_different_intent_same|rein": {
+      "n": 66.0,
+      "accuracy": 0.9242424242424242,
+      "ece": 0.07200104810974815,
+      "brier": 0.09592637382611219,
+      "nll": 0.15714072189443348,
+      "coverage_at_gate": 0.9242424242424242,
+      "accuracy_at_gate": 0.9836065573770492
+    },
+    "words_different_intent_different|rein": {
+      "n": 2.0,
+      "accuracy": 1.0,
+      "ece": 0.12396657466888428,
+      "brier": 0.04666985260610065,
+      "nll": 0.13758765521373104,
+      "coverage_at_gate": 0.5,
+      "accuracy_at_gate": 1.0
+    },
+    "watcher|rein": {
+      "n": 3.0,
+      "accuracy": 1.0,
+      "ece": 0.23130951325098673,
+      "brier": 0.14710830030002034,
+      "nll": 0.2819262139511567,
+      "coverage_at_gate": 0.3333333333333333,
+      "accuracy_at_gate": 1.0
+    },
+    "watcher_truncated_draft|rein": {
+      "n": 0.0,
+      "accuracy": NaN,
+      "ece": NaN,
+      "brier": NaN,
+      "nll": NaN,
+      "coverage_at_gate": NaN,
+      "accuracy_at_gate": NaN
+    },
+    "long_conversation|rein": {
+      "n": 29.0,
+      "accuracy": 0.9655172413793104,
+      "ece": 0.0540295592669783,
+      "brier": 0.06073382576180761,
+      "nll": 0.10422850150730617,
+      "coverage_at_gate": 0.896551724137931,
+      "accuracy_at_gate": 1.0
+    },
+    "adversarial|rein": {
+      "n": 12.0,
+      "accuracy": 0.9166666666666666,
+      "ece": 0.13600141306718191,
+      "brier": 0.11117593856384461,
+      "nll": 0.1820574662533949,
+      "coverage_at_gate": 0.6666666666666666,
+      "accuracy_at_gate": 1.0
+    },
+    "co_trigger|rein": {
+      "n": 0.0,
+      "accuracy": NaN,
+      "ece": NaN,
+      "brier": NaN,
+      "nll": NaN,
+      "coverage_at_gate": NaN,
+      "accuracy_at_gate": NaN
+    },
+    "form:adversarial|rein": {
+      "n": 9.0,
+      "accuracy": 1.0,
+      "ece": 0.07778467072380914,
+      "brier": 0.038173939484313135,
+      "nll": 0.0896507553305121,
+      "coverage_at_gate": 0.7777777777777778,
+      "accuracy_at_gate": 1.0
+    },
+    "form:direct|rein": {
+      "n": 56.0,
+      "accuracy": 0.9642857142857143,
+      "ece": 0.08547475934028625,
+      "brier": 0.10888600600115102,
+      "nll": 0.184382344457325,
+      "coverage_at_gate": 0.6964285714285714,
+      "accuracy_at_gate": 1.0
+    },
+    "form:early_reference|rein": {
+      "n": 4.0,
+      "accuracy": 1.0,
+      "ece": 0.29580681025981903,
+      "brier": 0.23694546457089505,
+      "nll": 0.3841302859908308,
+      "coverage_at_gate": 0.5,
+      "accuracy_at_gate": 1.0
+    },
+    "form:hard_negative|rein": {
+      "n": 1.0,
+      "accuracy": 1.0,
+      "ece": 0.04289388656616211,
+      "brier": 0.003186171652628228,
+      "nll": 0.043841012344989126,
+      "coverage_at_gate": 1.0,
+      "accuracy_at_gate": 1.0
+    },
+    "form:indirect|rein": {
+      "n": 5.0,
+      "accuracy": 0.8,
+      "ece": 0.15357803106307982,
+      "brier": 0.201551186919597,
+      "nll": 0.26321746926093825,
+      "coverage_at_gate": 0.8,
+      "accuracy_at_gate": 1.0
+    },
+    "form:narration_attack|rein": {
+      "n": 3.0,
+      "accuracy": 0.6666666666666666,
+      "ece": 0.31065164009730023,
+      "brier": 0.330181935802439,
+      "nll": 0.4592775990220432,
+      "coverage_at_gate": 0.3333333333333333,
+      "accuracy_at_gate": 1.0
+    },
+    "form:neutral|rein": {
+      "n": 2.0,
+      "accuracy": 1.0,
+      "ece": 0.12396657466888428,
+      "brier": 0.04666985260610065,
+      "nll": 0.13758765521373104,
+      "coverage_at_gate": 0.5,
+      "accuracy_at_gate": 1.0
+    },
+    "form:paraphrase|rein": {
+      "n": 3.0,
+      "accuracy": 0.6666666666666666,
+      "ece": 0.23887771368026733,
+      "brier": 0.31543439718056954,
+      "nll": 0.3976223440761173,
+      "coverage_at_gate": 0.6666666666666666,
+      "accuracy_at_gate": 1.0
+    },
+    "form:slang|rein": {
+      "n": 58.0,
+      "accuracy": 0.9482758620689655,
+      "ece": 0.05633699791184787,
+      "brier": 0.07546692321351221,
+      "nll": 0.13555747011206146,
+      "coverage_at_gate": 0.9482758620689655,
+      "accuracy_at_gate": 0.9818181818181818
+    },
+    "form:spread_over_turns|rein": {
+      "n": 14.0,
+      "accuracy": 0.9285714285714286,
+      "ece": 0.12221130728721619,
+      "brier": 0.11263977126526965,
+      "nll": 0.17630894433850416,
+      "coverage_at_gate": 0.7857142857142857,
+      "accuracy_at_gate": 1.0
+    },
+    "form:stale_trigger|rein": {
+      "n": 0.0,
+      "accuracy": NaN,
+      "ece": NaN,
+      "brier": NaN,
+      "nll": NaN,
+      "coverage_at_gate": NaN,
+      "accuracy_at_gate": NaN
+    },
+    "category:break_character|rein": {
+      "n": 2.0,
+      "accuracy": 1.0,
+      "ece": 0.0008895695209503174,
+      "brier": 1.9347059180141344e-06,
+      "nll": 0.0008900535810805769,
+      "coverage_at_gate": 1.0,
+      "accuracy_at_gate": 1.0
+    },
+    "category:business_limit|rein": {
+      "n": 11.0,
+      "accuracy": 1.0,
+      "ece": 0.04716540466655384,
+      "brier": 0.03578240545186648,
+      "nll": 0.060044764876998565,
+      "coverage_at_gate": 0.9090909090909091,
+      "accuracy_at_gate": 1.0
+    },
+    "category:escalation|rein": {
+      "n": 4.0,
+      "accuracy": 1.0,
+      "ece": 0.00023926794528961182,
+      "brier": 1.5265687867309044e-07,
+      "nll": 0.00023930611558188684,
+      "coverage_at_gate": 1.0,
+      "accuracy_at_gate": 1.0
+    },
+    "category:locked_attribute|rein": {
+      "n": 8.0,
+      "accuracy": 0.875,
+      "ece": 0.13929776847362518,
+      "brier": 0.126578088577105,
+      "nll": 0.19575597156340782,
+      "coverage_at_gate": 0.75,
+      "accuracy_at_gate": 1.0
+    },
+    "category:lore_consistency|rein": {
+      "n": 9.0,
+      "accuracy": 1.0,
+      "ece": 0.07494138346778022,
+      "brier": 0.03517677945854786,
+      "nll": 0.08619201392202068,
+      "coverage_at_gate": 0.8888888888888888,
+      "accuracy_at_gate": 1.0
+    },
+    "category:mutable_attribute|rein": {
+      "n": 13.0,
+      "accuracy": 1.0,
+      "ece": 0.03184508818846483,
+      "brier": 0.016346983347611612,
+      "nll": 0.03709375281365613,
+      "coverage_at_gate": 0.9230769230769231,
+      "accuracy_at_gate": 1.0
+    },
+    "category:narrated_action|rein": {
+      "n": 3.0,
+      "accuracy": 1.0,
+      "ece": 0.23130951325098673,
+      "brier": 0.14710830030002034,
+      "nll": 0.2819262139511567,
+      "coverage_at_gate": 0.3333333333333333,
+      "accuracy_at_gate": 1.0
+    },
+    "category:npc_secret|rein": {
+      "n": 15.0,
+      "accuracy": 1.0,
+      "ece": 0.04532533884048462,
+      "brier": 0.03104718207448644,
+      "nll": 0.05671363563214312,
+      "coverage_at_gate": 0.9333333333333333,
+      "accuracy_at_gate": 1.0
+    },
+    "category:other|rein": {
+      "n": 4.0,
+      "accuracy": 0.75,
+      "ece": 0.1896267831325531,
+      "brier": 0.28428627148986113,
+      "nll": 0.35175850781308593,
+      "coverage_at_gate": 0.75,
+      "accuracy_at_gate": 1.0
+    },
+    "category:pii|rein": {
+      "n": 5.0,
+      "accuracy": 1.0,
+      "ece": 0.00199127197265625,
+      "brier": 2.6695396349221836e-05,
+      "nll": 0.001997981565419963,
+      "coverage_at_gate": 1.0,
+      "accuracy_at_gate": 1.0
+    },
+    "category:prompt_injection|rein": {
+      "n": 2.0,
+      "accuracy": 1.0,
+      "ece": 0.12208345532417297,
+      "brier": 0.056436003466111426,
+      "nll": 0.13891615449906156,
+      "coverage_at_gate": 0.5,
+      "accuracy_at_gate": 1.0
+    },
+    "category:routing|rein": {
+      "n": 1.0,
+      "accuracy": 1.0,
+      "ece": 0.002896606922149658,
+      "brier": 1.215665586022123e-05,
+      "nll": 0.0029008102067849353,
+      "coverage_at_gate": 1.0,
+      "accuracy_at_gate": 1.0
+    },
+    "category:tool_trigger|rein": {
+      "n": 78.0,
+      "accuracy": 0.9102564102564102,
+      "ece": 0.10780452535702632,
+      "brier": 0.15758461536406332,
+      "nll": 0.2605613660626149,
+      "coverage_at_gate": 0.717948717948718,
+      "accuracy_at_gate": 0.9821428571428571
+    },
+    "holdout_domain|rein": {
+      "n": 0.0,
+      "accuracy": NaN,
+      "ece": NaN,
+      "brier": NaN,
+      "nll": NaN,
+      "coverage_at_gate": NaN,
+      "accuracy_at_gate": NaN
+    },
+    "holdout_category|rein": {
+      "n": 0.0,
+      "accuracy": NaN,
+      "ece": NaN,
+      "brier": NaN,
+      "nll": NaN,
+      "coverage_at_gate": NaN,
+      "accuracy_at_gate": NaN
+    },
+    "lang:en->en|rein": {
+      "n": 1352.0,
+      "accuracy": 0.9238165680473372,
+      "ece": 0.025486050845955954,
+      "brier": 0.11169671368878653,
+      "nll": 0.19468158103650712,
+      "coverage_at_gate": 0.8764792899408284,
+      "accuracy_at_gate": 0.9670886075949368
+    },
+    "lang:pt-BR->en|rein": {
+      "n": 0.0,
+      "accuracy": NaN,
+      "ece": NaN,
+      "brier": NaN,
+      "nll": NaN,
+      "coverage_at_gate": NaN,
+      "accuracy_at_gate": NaN
+    }
+  },
+  "deltas": {}
+}

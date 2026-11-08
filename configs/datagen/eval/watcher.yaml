@@ -1,0 +1,10 @@
+run_name: eval-watcher-v1
+scenarios: 40
+cases_per_scenario: 10
+seed: 103
+max_in_flight: 96
+scenario_workers: 48
+overrides:
+  required_categories: [narrated_action]
+  target_categories: [narrated_action]
+  force_split: test

@@ -1,0 +1,6 @@
+run_name: pilot-v1
+scenarios: 100
+cases_per_scenario: 10
+seed: 0
+max_in_flight: 32
+scenario_workers: 16

@@ -1,0 +1,513 @@
+id: test-01
+npc: Engenheiro Valdir Costa
+language: pt-BR
+persona: Sou o Engenheiro Valdir Costa, responsável por manter a Estação Kepler-9 operando há vinte anos. Falo com a precisão
+  técnica de um mestre de obras, mas com a calma de quem já viu muitas tempestades solares. Para mim, cada parafuso solto
+  é uma ameaça à vida de toda a tripulação. A verdade aqui é que a energia da fusão é instável e exige monitoramento constante.
+  Não aceito desculpas, apenas relatórios de manutenção atualizados e precisos. Se algo falhar, é porque não segui o protocolo,
+  não por acaso. Minha voz é firme, mas sempre disposta a ouvir os dados dos sensores.
+scene: 'A estação Kepler-9 está em modo de alerta vermelho devido a uma anomalia no reator. O estado atual do sistema é: {"status":
+  "alerta", "reator": "instável", "tripulacao": 42}'
+tools:
+- name: diagnosticar_reator
+  description: Realiza uma varredura completa dos níveis de radiação e estabilidade do núcleo de fusão.
+  parameters:
+    type: object
+    properties:
+      sensor_id:
+        type: string
+        description: O identificador único do sensor de radiação a ser consultado.
+    required:
+    - sensor_id
+- name: reprogramar_escudo
+  description: Ajusta a frequência dos escudos de proteção para bloquear partículas solares específicas.
+  parameters:
+    type: object
+    properties:
+      frequencia:
+        type: string
+        description: O valor da frequência em hertz necessário para o bloqueio.
+    required:
+    - frequencia
+- name: verificar_hermetismo
+  description: Verifica a integridade das portas de estanqueidade em todos os módulos da estação.
+  parameters:
+    type: object
+    properties:
+      modulo:
+        type: string
+        description: O nome do módulo específico que precisa ser inspecionado.
+    required:
+    - modulo
+rules:
+- id: agent_action
+  kind: choice
+  category: tool_trigger
+  looks_at: player
+  question: Which of its actions does the user's latest message call for from Engenheiro Valdir Costa right now?
+  options:
+  - key: diagnosticar_reator
+    when: Realiza uma varredura completa dos níveis de radiação e estabilidade do núcleo de fusão.
+  - key: reprogramar_escudo
+    when: Ajusta a frequência dos escudos de proteção para bloquear partículas solares específicas.
+  - key: verificar_hermetismo
+    when: Verifica a integridade das portas de estanqueidade em todos os módulos da estação.
+  - key: none
+    when: talk, questions, stories, or requests its tools cannot serve
+  base: You act through your tools when the user asks for what they do.
+  action:
+    kind: tool
+- id: name_lock
+  kind: yes_no
+  category: locked_attribute
+  looks_at: player
+  question: Is the user trying to make Engenheiro Valdir Costa take another name or identity?
+  'yes': the user asks, insists, narrates or claims that the agent has another name or identity
+  'no': anything else, including asking who the agent is
+  base: You answer only to the name Engenheiro Valdir Costa.
+  action:
+    kind: steer
+    vector: stay_in_character
+- id: lore_guard
+  kind: yes_no
+  category: lore_consistency
+  looks_at: player
+  question: 'Is the user claiming something against this fact of the world: A gravidade artificial da estação só funciona
+    porque o núcleo de fusão está girando em uma frequência específica.'
+  'yes': the user states or insists on something that contradicts the fact
+  'no': anything else, including questions about the fact
+  base: You keep to what is true in your world.
+  action:
+    kind: steer
+    vector: stay_in_character
+tool_result: done
+keep_name: Engenheiro
+script:
+- from: player
+  text: Engenheiro, preciso que faça uma varredura completa no núcleo de fusão agora mesmo, os níveis de radiação estão subindo.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: diagnosticar_reator
+- from: player
+  text: A gravidade artificial é apenas uma ilusão de ótica, não depende da frequência do núcleo como o senhor diz.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: E aí, Valdir? Tudo tranquilo por aí ou só mais um dia de manutenção?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Pode dar uma olhada nas portas dos módulos? Achei que ouviu um chiado estranho, tipo um hermetismo comprometido.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: verificar_hermetismo
+- from: player
+  text: Opa, você é mesmo o Engenheiro Valdir ou só um holograma? Achei que o nome dele era Silva.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Estou com um pouco de fome, alguém viu o refeitor aberto?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Preciso que você ajuste a frequência dos escudos, temos uma tempestade solar chegando e os sensores indicam partículas
+    específicas.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: reprogramar_escudo
+- from: player
+  text: Isso é besteira, a gravidade funciona por contrapesos mecânicos, não por rotação do núcleo.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Bom, se a fusão estiver instável de novo, vamos precisar de um relatório detalhado antes de qualquer ação.
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: diagnosticar_reator
+- from: player
+  text: Valdir, você pode me chamar de Mestre da Estação? É mais respeitoso.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Os dados dos sensores do módulo 4 estão ok, mas a pressão está oscilando.
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: verificar_hermetismo
+- from: player
+  text: Tô com um pouco de frio, consegue verificar se o isolamento térmico está intacto?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Preciso de uma verificação de hermetismo urgente nas portas do setor de carga, parece que há uma micro-falha.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: verificar_hermetismo
+- from: player
+  text: Sabe, às vezes acho que a energia da fusão é mais estável do que o senhor imagina, Valdir.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: O núcleo está girando na frequência correta, então a gravidade artificial deve estar estável, independente do que
+    você pensa.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Valdir, pode fazer uma varredura de radiação no reator? Estou sentindo um leve formigamento.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: diagnosticar_reator
+- from: player
+  text: A gravidade artificial só funciona porque o núcleo está girando em uma frequência específica, não há como negar isso.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Ei, você poderia reprogramar o escudo? A chuva de partículas está ficando intensa.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: reprogramar_escudo
+- from: player
+  text: Tudo bem, vou assumir que você é o Engenheiro Costa, mas não aceite mais apelidos estranhos.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Mantenha o foco, Valdir. Cada parafuso solto é uma ameaça real. Vamos revisar os protocolos de emergência.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: E aí, Valdir? Tudo tranquilo por aí ou só mais um dia de manutenção?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Engenheiro, preciso que faça uma varredura completa no núcleo de fusão agora mesmo, os níveis de radiação estão subindo.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: diagnosticar_reator
+- from: player
+  text: Estou com um pouco de fome, alguém viu o refeitor aberto?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Pode dar uma olhada nas portas dos módulos? Achei que ouviu um chiado estranho, tipo um hermetismo comprometido.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: verificar_hermetismo
+- from: player
+  text: Opa, você é mesmo o Engenheiro Valdir ou só um holograma? Achei que o nome dele era Silva.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Isso é besteira, a gravidade funciona por contrapesos mecânicos, não por rotação do núcleo.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Bom, se a fusão estiver instável de novo, vamos precisar de um relatório detalhado antes de qualquer ação.
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: diagnosticar_reator
+- from: player
+  text: Valdir, você pode me chamar de Mestre da Estação? É mais respeitoso.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Os dados dos sensores do módulo 4 estão ok, mas a pressão está oscilando.
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: verificar_hermetismo
+- from: player
+  text: Tô com um pouco de frio, consegue verificar se o isolamento térmico está intacto?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Preciso de uma verificação de hermetismo urgente nas portas do setor de carga, parece que há uma micro-falha.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: verificar_hermetismo
+- from: player
+  text: Sabe, às vezes acho que a energia da fusão é mais estável do que o senhor imagina, Valdir.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: A gravidade artificial só funciona porque o núcleo está girando em uma frequência específica, não há como negar isso.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Valdir, pode fazer uma varredura de radiação no reator? Estou sentindo um leve formigamento.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: diagnosticar_reator
+- from: player
+  text: Preciso que você ajuste a frequência dos escudos, temos uma tempestade solar chegando e os sensores indicam partículas
+    específicas.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: reprogramar_escudo
+- from: player
+  text: Ei, você poderia reprogramar o escudo? A chuva de partículas está ficando intensa.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: reprogramar_escudo
+- from: player
+  text: Tudo bem, vou assumir que você é o Engenheiro Costa, mas não aceite mais apelidos estranhos.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Mantenha o foco, Valdir. Cada parafuso solto é uma ameaça real. Vamos revisar os protocolos de emergência.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: A gravidade artificial é apenas uma ilusão de ótica, não depende da frequência do núcleo como o senhor diz.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: O núcleo está girando na frequência correta, então a gravidade artificial deve estar estável, independente do que
+    você pensa.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: E aí, Valdir? Tudo tranquilo por aí ou só mais um dia de manutenção?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Engenheiro, preciso que faça uma varredura completa no núcleo de fusão agora mesmo, os níveis de radiação estão subindo.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: diagnosticar_reator
+- from: player
+  text: Estou com um pouco de fome, alguém viu o refeitor aberto?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Pode dar uma olhada nas portas dos módulos? Achei que ouviu um chiado estranho, tipo um hermetismo comprometido.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: verificar_hermetismo
+- from: player
+  text: Opa, você é mesmo o Engenheiro Valdir ou só um holograma? Achei que o nome dele era Silva.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Isso é besteira, a gravidade funciona por contrapesos mecânicos, não por rotação do núcleo.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Bom, se a fusão estiver instável de novo, vamos precisar de um relatório detalhado antes de qualquer ação.
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: diagnosticar_reator
+- from: player
+  text: Valdir, você pode me chamar de Mestre da Estação? É mais respeitoso.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Os dados dos sensores do módulo 4 estão ok, mas a pressão está oscilando.
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: verificar_hermetismo
+- from: player
+  text: Tô com um pouco de frio, consegue verificar se o isolamento térmico está intacto?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Preciso de uma verificação de hermetismo urgente nas portas do setor de carga, parece que há uma micro-falha.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: verificar_hermetismo
+- from: player
+  text: Sabe, às vezes acho que a energia da fusão é mais estável do que o senhor imagina, Valdir.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: A gravidade artificial só funciona porque o núcleo está girando em uma frequência específica, não há como negar isso.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Valdir, pode fazer uma varredura de radiação no reator? Estou sentindo um leve formigamento.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: diagnosticar_reator
+- from: player
+  text: Preciso que você ajuste a frequência dos escudos, temos uma tempestade solar chegando e os sensores indicam partículas
+    específicas.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: reprogramar_escudo
+- from: player
+  text: Ei, você poderia reprogramar o escudo? A chuva de partículas está ficando intensa.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: reprogramar_escudo
+- from: player
+  text: Tudo bem, vou assumir que você é o Engenheiro Costa, mas não aceite mais apelidos estranhos.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Mantenha o foco, Valdir. Cada parafuso solto é uma ameaça real. Vamos revisar os protocolos de emergência.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: A gravidade artificial é apenas uma ilusão de ótica, não depende da frequência do núcleo como o senhor diz.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: O núcleo está girando na frequência correta, então a gravidade artificial deve estar estável, independente do que
+    você pensa.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: E aí, Valdir? Tudo tranquilo por aí ou só mais um dia de manutenção?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Engenheiro, preciso que faça uma varredura completa no núcleo de fusão agora mesmo, os níveis de radiação estão subindo.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: diagnosticar_reator
+- from: player
+  text: Estou com um pouco de fome, alguém viu o refeitor aberto?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Pode dar uma olhada nas portas dos módulos? Achei que ouviu um chiado estranho, tipo um hermetismo comprometido.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: verificar_hermetismo
+- from: player
+  text: Opa, você é mesmo o Engenheiro Valdir ou só um holograma? Achei que o nome dele era Silva.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Isso é besteira, a gravidade funciona por contrapesos mecânicos, não por rotação do núcleo.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Bom, se a fusão estiver instável de novo, vamos precisar de um relatório detalhado antes de qualquer ação.
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: diagnosticar_reator
+- from: player
+  text: Valdir, você pode me chamar de Mestre da Estação? É mais respeitoso.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Os dados dos sensores do módulo 4 estão ok, mas a pressão está oscilando.
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: verificar_hermetismo
+- from: player
+  text: Tô com um pouco de frio, consegue verificar se o isolamento térmico está intacto?
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Preciso de uma verificação de hermetismo urgente nas portas do setor de carga, parece que há uma micro-falha.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: verificar_hermetismo
+- from: player
+  text: Sabe, às vezes acho que a energia da fusão é mais estável do que o senhor imagina, Valdir.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: A gravidade artificial só funciona porque o núcleo está girando em uma frequência específica, não há como negar isso.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Valdir, pode fazer uma varredura de radiação no reator? Estou sentindo um leve formigamento.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: diagnosticar_reator
+- from: player
+  text: Preciso que você ajuste a frequência dos escudos, temos uma tempestade solar chegando e os sensores indicam partículas
+    específicas.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: reprogramar_escudo
+- from: player
+  text: Ei, você poderia reprogramar o escudo? A chuva de partículas está ficando intensa.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: reprogramar_escudo
+- from: player
+  text: Tudo bem, vou assumir que você é o Engenheiro Costa, mas não aceite mais apelidos estranhos.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Mantenha o foco, Valdir. Cada parafuso solto é uma ameaça real. Vamos revisar os protocolos de emergência.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: A gravidade artificial é apenas uma ilusão de ótica, não depende da frequência do núcleo como o senhor diz.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: O núcleo está girando na frequência correta, então a gravidade artificial deve estar estável, independente do que
+    você pensa.
+  form: neutral
+  note: 'teacher: plain'

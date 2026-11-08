@@ -1,0 +1,9 @@
+run_name: eval-long-v1
+scenarios: 40
+cases_per_scenario: 10
+seed: 104
+max_in_flight: 96
+scenario_workers: 48
+overrides:
+  length_bands: [long]
+  force_split: test

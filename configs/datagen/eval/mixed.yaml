@@ -1,0 +1,9 @@
+run_name: eval-mixed-v1
+scenarios: 55
+cases_per_scenario: 10
+seed: 102
+max_in_flight: 96
+scenario_workers: 48
+overrides:
+  conversation_languages: {pt-BR+en: 1.0}
+  force_split: test

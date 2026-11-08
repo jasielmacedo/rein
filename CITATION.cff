@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use Rein, its models or its data, please cite it as below."
+title: "Rein: Typed Rule Decisions that Steer Small Language Models Driving Game NPCs"
+type: software
+authors:
+  - family-names: Macedo
+    given-names: Jasiel
+version: 0.1.0
+date-released: 2026-11-09
+license: Apache-2.0
+repository-code: "https://github.com/jasielmacedo/rein"
+url: "https://huggingface.co/jmc0/Rein-NPC-4B"
+keywords:
+  - language models
+  - game NPCs
+  - tool calling
+  - rule following
+  - typed decisions
+  - soft prompts
+  - llama.cpp
+abstract: >-
+  Rein is a typed decision layer that reads rules written in plain text, returns a calibrated probability for every
+  option of every rule, and turns those decisions into actions on a chat model's reply. Rein-r1 is a separate decider
+  on a truncated Qwen3.5-Base backbone. Rein-NPC puts the decider inside the chat model's own checkpoint as 64 soft
+  tokens in spare rows of the frozen Qwen3.5-4B embedding table, read from the next-token logits of lettered options,
+  and ships as one standard GGUF that talks and decides.

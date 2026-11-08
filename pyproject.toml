@@ -1,0 +1,80 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rein"
+version = "0.1.0"
+description = "Typed rule-decision model and control layer for conversations"
+readme = "README.md"
+license = "Apache-2.0"
+authors = [{ name = "Jasiel Macedo" }]
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "httpx>=0.28",
+    "huggingface_hub>=0.34",
+    "pydantic>=2.9",
+    "python-dotenv>=1.0",
+    "pyyaml>=6.0",
+]
+
+[project.urls]
+Repository = "https://github.com/jasielmacedo/rein"
+"Rein-NPC-4B" = "https://huggingface.co/jmc0/Rein-NPC-4B"
+"Rein-r1-4B" = "https://huggingface.co/jmc0/rein-r1-4b"
+Dataset = "https://huggingface.co/datasets/jmc0/rein-decisions"
+Playground = "https://huggingface.co/spaces/jmc0/rein-npc-playground"
+
+[project.optional-dependencies]
+datagen = [
+    "datasketch>=1.6",
+    "lingua-language-detector>=2.0",
+    "pyarrow>=17.0",
+]
+play = [
+    "fastapi>=0.115",
+    "jinja2>=3.1",
+    "transformers>=5.17,<6",
+    "uvicorn>=0.32",
+]
+train = [
+    "accelerate>=1.10",
+    "peft>=0.17",
+    "safetensors>=0.5",
+    "torch>=2.8,<2.14",
+    "transformers>=5.17,<6",
+]
+
+[dependency-groups]
+dev = [
+    "modal==1.3.5",
+    "mypy>=1.13",
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "respx>=0.21",
+    "ruff>=0.8",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rein"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.format]
+# The Rein-r1 model cards are published on the Hub as written; their code blocks stay byte for byte.
+exclude = ["configs/export/rein-0.8b-card.md", "configs/export/rein-4b-card.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+warn_unused_ignores = true

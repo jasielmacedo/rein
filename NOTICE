@@ -1,0 +1,30 @@
+Rein
+Copyright 2026 Jasiel Macedo
+
+This repository is released under the Apache License, Version 2.0 (see LICENSE).
+
+Models built with this code
+- Rein-r1-0.8B and Rein-r1-4B are adapters and heads on Qwen/Qwen3.5-0.8B-Base and Qwen/Qwen3.5-4B-Base;
+  Rein-NPC-4B is Qwen/Qwen3.5-4B with 64 trained embedding rows. The Qwen3.5 models are Apache-2.0
+  (Copyright Alibaba Cloud).
+
+Models used to build the data (not redistributed here)
+- Teacher: QuantTrio/Qwen3.5-35B-A3B-AWQ, Apache-2.0.
+- Auditor and judge: Qwen/Qwen3.8-27B-FP8, Apache-2.0.
+
+Third-party data converted for training (not redistributed here; rebuilt from the sources by rein.public.build)
+- Banking77, PolyAI/banking77, CC-BY-4.0.
+- CLINC150, clinc/clinc_oos, CC-BY-3.0.
+- MASSIVE, Amazon Science, CC-BY-4.0.
+- Kev decision-v7, jaredpalmer/kev-suites, no license stated by its author; used for training only and never
+  redistributed. The released dataset jmc0/rein-decisions holds the synthetic records alone.
+
+Baselines evaluated (not redistributed here)
+- Kev-4B and Kev-0.8B, jaredpalmer/kev-4b and jaredpalmer/kev-0.8b, Apache-2.0 (https://github.com/jaredpalmer/kev).
+- TinyJev-0.6B, AnkitAI/TinyJev-0.6B, MIT (https://github.com/ankit-aglawe/tinyjev).
+
+The playground (tools/playground)
+- Pixel art: "Zelda-like tilesets and sprites" by ArMM1998, CC0 (public domain),
+  https://opengameart.org/content/zelda-like-tilesets-and-sprites. Files: tools/playground/assets.
+- Loaded at run time from jsDelivr, not vendored: wllama (MIT, https://github.com/ngxson/wllama) and
+  @huggingface/jinja (MIT, https://github.com/huggingface/huggingface.js).

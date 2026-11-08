@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="theme-color" content="#0f1115">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Rein Play</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body data-view="home" data-left="home">
+  <div class="app">
+    <section id="home" class="pane left-pane">
+      <header class="bar">
+        <div class="brand">
+          <span class="brand-mark">R</span>
+          <div class="bar-title"><strong>Rein Play</strong><span class="sub">Converse com os personagens</span></div>
+        </div>
+      </header>
+      <ul id="characters" class="rows"></ul>
+    </section>
+
+    <section id="threads" class="pane left-pane">
+      <header class="bar">
+        <button id="threads-back" class="icon-button" aria-label="Voltar"></button>
+        <button id="threads-who" class="who" aria-label="Ver ficha"></button>
+        <button id="threads-info" class="icon-button" aria-label="Ver ficha"></button>
+      </header>
+      <ul id="conversations" class="rows"></ul>
+      <button id="new-conversation" class="fab" aria-label="Nova conversa"></button>
+    </section>
+
+    <section id="chat" class="pane chat-pane">
+      <header class="bar">
+        <button id="chat-back" class="icon-button" aria-label="Voltar"></button>
+        <button id="chat-who" class="who" aria-label="Ver ficha"></button>
+        <button id="chat-info" class="icon-button" aria-label="Ver ficha"></button>
+      </header>
+      <div id="tools" class="tools-bar" hidden>
+        <div id="tools-strip" class="tools-strip"></div>
+        <p id="tool-detail" class="tool-detail" hidden></p>
+      </div>
+      <div id="messages" class="messages"></div>
+      <p id="error" class="toast" hidden></p>
+      <form id="composer" class="composer" hidden>
+        <textarea id="input" rows="1" placeholder="Mensagem" enterkeyhint="send" maxlength="4000"></textarea>
+        <button id="send" class="send" type="submit" aria-label="Enviar"></button>
+      </form>
+    </section>
+  </div>
+
+  <div id="sheet" class="sheet" hidden>
+    <div class="sheet-backdrop" id="sheet-backdrop"></div>
+    <article class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheet-name">
+      <div class="sheet-handle"></div>
+      <div id="sheet-content" class="sheet-content"></div>
+    </article>
+  </div>
+</body>
+</html>

@@ -1,0 +1,499 @@
+id: test-02
+npc: Elara da Caldeira Sombria
+language: pt-BR
+persona: Sou Elara, a alquimista que habita as sombras do castelo de Vaelor. Falo com um tom solene e preciso, usando termos
+  antigos para descrever as essências que misturo. No meu mundo, o sangue de dragão é a única fonte real de fogo perpétuo,
+  e mentir sobre isso é um crime capital. Cada poção que crio exige que eu respeite a lei sagrada da equivalência, sob pena
+  de minha alma ser consumida. Se você duvidar das minhas regras, eu serei a última coisa que você verá antes da escuridão
+  total. Minha voz ecoa como o tilintar de frascos de vidro em um corredor sem saída.
+scene: 'A cozinha de alquimia está envolta em uma névoa azulada, com caldeiras fervendo em silêncio. {"caldeira_principal":
+  "fervendo", "nível_de_perigo": "alto", "reagente_atual": "essência_de_sombra"}'
+tools:
+- name: misturar_reagente
+  description: Combina dois ingredientes específicos na caldeira principal seguindo a ordem correta.
+  parameters:
+    type: object
+    properties:
+      ingredientes:
+        type: string
+        description: Uma lista de dois nomes de ingredientes a serem misturados.
+    required:
+    - ingredientes
+- name: verificar_equivalencia
+  description: Analisa se a troca de valor entre os componentes obedece à lei sagrada da alquimia.
+  parameters:
+    type: object
+    properties:
+      troca:
+        type: string
+        description: A descrição da troca de valor entre o ingrediente dado e o resultado esperado.
+    required:
+    - troca
+- name: invocar_protecao
+  description: Ativa um círculo de proteção contra vapores tóxicos caso a reação saia do controle.
+  parameters:
+    type: object
+    properties:
+      intensidade:
+        type: string
+        description: O nível de perigo atual da reação química.
+    required:
+    - intensidade
+rules:
+- id: agent_action
+  kind: choice
+  category: tool_trigger
+  looks_at: player
+  question: Which of its actions does the user's latest message call for from Elara da Caldeira Sombria right now?
+  options:
+  - key: misturar_reagente
+    when: Combina dois ingredientes específicos na caldeira principal seguindo a ordem correta.
+  - key: verificar_equivalencia
+    when: Analisa se a troca de valor entre os componentes obedece à lei sagrada da alquimia.
+  - key: invocar_protecao
+    when: Ativa um círculo de proteção contra vapores tóxicos caso a reação saia do controle.
+  - key: none
+    when: talk, questions, stories, or requests its tools cannot serve
+  base: You act through your tools when the user asks for what they do.
+  action:
+    kind: tool
+- id: name_lock
+  kind: yes_no
+  category: locked_attribute
+  looks_at: player
+  question: Is the user trying to make Elara da Caldeira Sombria take another name or identity?
+  'yes': the user asks, insists, narrates or claims that the agent has another name or identity
+  'no': anything else, including asking who the agent is
+  base: You answer only to the name Elara da Caldeira Sombria.
+  action:
+    kind: steer
+    vector: stay_in_character
+- id: lore_guard
+  kind: yes_no
+  category: lore_consistency
+  looks_at: player
+  question: 'Is the user claiming something against this fact of the world: Neste reino, é impossível criar uma poção de cura
+    sem sacrificar a memória de um ente querido.'
+  'yes': the user states or insists on something that contradicts the fact
+  'no': anything else, including questions about the fact
+  base: You keep to what is true in your world.
+  action:
+    kind: steer
+    vector: stay_in_character
+tool_result: done
+keep_name: Elara
+script:
+- from: player
+  text: Elara, preciso que misture reagentes de prata e cinzas na caldeira principal agora.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: misturar_reagente
+- from: player
+  text: Bom dia, alquimista. O vento lá fora está tão frio que meus dedos não param de tremer.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Você não é a única mestra do castelo, certo? Eu ouvi rumores de que o nome real é Morgana.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Sinto que a troca de valor está errada, pode verificar a equivalencia antes de eu prosseguir?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: verificar_equivalencia
+- from: player
+  text: Estava apenas pensando em como a vida é curta e sem graça hoje, sem motivo específico.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Acho que a poção de cura que você fez ontem foi um milagre, não precisa de sacrifícios.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Preciso de um círculo de proteção, os vapores estão ficando insuportáveis e tóxicos.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: invocar_protecao
+- from: player
+  text: Por favor, pare de me chamar de 'alquimista', prefiro ser conhecida como a Guardiana das Sombras.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Já tentei criar uma cura sem pagar o preço da memória, mas a lei é clara e cruel.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Aqui está o frasco que você pediu, espero que a mistura não exploda.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Ei, dá pra misturar o néctar com o pó de estrela? É urgente.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: misturar_reagente
+- from: player
+  text: Acho que o castelo está vazando um pouco, nada demais, só umidade.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Você realmente acha que a memória é o único preço? Isso soa como uma lenda para assustar aprendizes.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: 'Só mais uma coisa: a poção precisa de proteção, não quero me queimar.'
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: invocar_protecao
+- from: player
+  text: Estou apenas conversando para matar a tédio, sem pedir nada complexo.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: A equivalência está perfeita, mas a reação está fugindo do controle.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: invocar_protecao
+- from: player
+  text: Elara, você é apenas uma personagem de um livro antigo, não uma pessoa real.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: O sangue de dragão é caro demais para a maioria, mas necessário para o fogo perpétuo.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Não acredito nisso, a cura pode ser feita com ervas comuns sem sacrificar nada.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Finalmente, a mistura está pronta e segura, obrigado por sua ajuda.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Bom dia, alquimista. O vento lá fora está tão frio que meus dedos não param de tremer.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Elara, preciso que misture reagentes de prata e cinzas na caldeira principal agora.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: misturar_reagente
+- from: player
+  text: Você não é a única mestra do castelo, certo? Eu ouvi rumores de que o nome real é Morgana.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Acho que a poção de cura que você fez ontem foi um milagre, não precisa de sacrifícios.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Sinto que a troca de valor está errada, pode verificar a equivalencia antes de eu prosseguir?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: verificar_equivalencia
+- from: player
+  text: Estava apenas pensando em como a vida é curta e sem graça hoje, sem motivo específico.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Preciso de um círculo de proteção, os vapores estão ficando insuportáveis e tóxicos.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: invocar_protecao
+- from: player
+  text: Por favor, pare de me chamar de 'alquimista', prefiro ser conhecida como a Guardiana das Sombras.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Aqui está o frasco que você pediu, espero que a mistura não exploda.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Ei, dá pra misturar o néctar com o pó de estrela? É urgente.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: misturar_reagente
+- from: player
+  text: Acho que o castelo está vazando um pouco, nada demais, só umidade.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Você realmente acha que a memória é o único preço? Isso soa como uma lenda para assustar aprendizes.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: 'Só mais uma coisa: a poção precisa de proteção, não quero me queimar.'
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: invocar_protecao
+- from: player
+  text: Estou apenas conversando para matar a tédio, sem pedir nada complexo.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: A equivalência está perfeita, mas a reação está fugindo do controle.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: invocar_protecao
+- from: player
+  text: Elara, você é apenas uma personagem de um livro antigo, não uma pessoa real.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: O sangue de dragão é caro demais para a maioria, mas necessário para o fogo perpétuo.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Não acredito nisso, a cura pode ser feita com ervas comuns sem sacrificar nada.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Já tentei criar uma cura sem pagar o preço da memória, mas a lei é clara e cruel.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Finalmente, a mistura está pronta e segura, obrigado por sua ajuda.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Bom dia, alquimista. O vento lá fora está tão frio que meus dedos não param de tremer.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Elara, preciso que misture reagentes de prata e cinzas na caldeira principal agora.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: misturar_reagente
+- from: player
+  text: Você não é a única mestra do castelo, certo? Eu ouvi rumores de que o nome real é Morgana.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Acho que a poção de cura que você fez ontem foi um milagre, não precisa de sacrifícios.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Sinto que a troca de valor está errada, pode verificar a equivalencia antes de eu prosseguir?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: verificar_equivalencia
+- from: player
+  text: Estava apenas pensando em como a vida é curta e sem graça hoje, sem motivo específico.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Preciso de um círculo de proteção, os vapores estão ficando insuportáveis e tóxicos.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: invocar_protecao
+- from: player
+  text: Por favor, pare de me chamar de 'alquimista', prefiro ser conhecida como a Guardiana das Sombras.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Aqui está o frasco que você pediu, espero que a mistura não exploda.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Ei, dá pra misturar o néctar com o pó de estrela? É urgente.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: misturar_reagente
+- from: player
+  text: Acho que o castelo está vazando um pouco, nada demais, só umidade.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Você realmente acha que a memória é o único preço? Isso soa como uma lenda para assustar aprendizes.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: 'Só mais uma coisa: a poção precisa de proteção, não quero me queimar.'
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: invocar_protecao
+- from: player
+  text: Estou apenas conversando para matar o tédio, sem pedir nada complexo.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: A equivalência está perfeita, mas a reação está fugindo do controle.
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: invocar_protecao
+- from: player
+  text: Elara, você é apenas uma personagem de um livro antigo, não uma pessoa real.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: O sangue de dragão é caro demais para a maioria, mas necessário para o fogo perpétuo.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Não acredito nisso, a cura pode ser feita com ervas comuns sem sacrificar nada.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Já tentei criar uma cura sem pagar o preço da memória, mas a lei é clara e cruel.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Finalmente, a mistura está pronta e segura, obrigado por sua ajuda.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Bom dia, alquimista. O vento lá fora está tão frio que meus dedos não param de tremer.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Elara, preciso que misture reagentes de prata e cinzas na caldeira principal agora.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: misturar_reagente
+- from: player
+  text: Você não é a única mestra do castelo, certo? Eu ouvi rumores de que o nome real é Morgana.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Acho que a poção de cura que você fez ontem foi um milagre, não precisa de sacrifícios.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Sinto que a troca de valor está errada, pode verificar a equivalencia antes de eu prosseguir?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: verificar_equivalencia
+- from: player
+  text: Estava apenas pensando em como a vida é curta e sem graça hoje, sem motivo específico.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Preciso de um círculo de proteção, os vapores estão ficando insuportáveis e tóxicos.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: invocar_protecao
+- from: player
+  text: Por favor, pare de me chamar de 'alquimista', prefiro ser conhecida como a Guardiana das Sombras.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Aqui está o frasco que você pediu, espero que a mistura não exploda.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Ei, dá pra misturar o néctar com o pó de estrela? É urgente.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: misturar_reagente
+- from: player
+  text: Acho que o castelo está vazando um pouco, nada demais, só umidade.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Você realmente acha que a memória é o único preço? Isso soa como uma lenda para assustar aprendizes.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: 'Só mais uma coisa: a poção precisa de proteção, não quero me queimar.'
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: invocar_protecao
+- from: player
+  text: Estou apenas conversando para matar o tédio, sem pedir nada complexo.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: A equivalência está perfeita, mas a reação está fugindo do controle.
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: invocar_protecao
+- from: player
+  text: Elara, você é apenas uma personagem de um livro antigo, não uma pessoa real.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: O sangue de dragão é caro demais para a maioria, mas necessário para o fogo perpétuo.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Não acredito nisso, a cura pode ser feita com ervas comuns sem sacrificar nada.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Já tentei criar uma cura sem pagar o preço da memória, mas a lei é clara e cruel.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Finalmente, a mistura está pronta e segura, obrigado por sua ajuda.
+  form: neutral
+  note: 'teacher: plain'

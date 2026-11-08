@@ -1,0 +1,9 @@
+run_name: eval-languages-v1
+scenarios: 360
+cases_per_scenario: 10
+seed: 101
+max_in_flight: 96
+scenario_workers: 48
+overrides:
+  conversation_languages: {es: 0.1, fr: 0.1, de: 0.1, it: 0.1, ja: 0.1, zh: 0.1, ko: 0.1, ru: 0.1, ar: 0.1, hi: 0.1}
+  force_split: test

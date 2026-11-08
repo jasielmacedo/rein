@@ -1,0 +1,8 @@
+run_name: topup-english-v1
+scenarios: 170
+cases_per_scenario: 10
+seed: 201
+max_in_flight: 96
+scenario_workers: 48
+overrides:
+  conversation_languages: {en: 1.0}

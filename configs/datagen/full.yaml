@@ -1,0 +1,6 @@
+run_name: full-v1
+scenarios: 2400
+cases_per_scenario: 10
+seed: 1
+max_in_flight: 64
+scenario_workers: 48

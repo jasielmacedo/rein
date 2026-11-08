@@ -1,0 +1,494 @@
+id: test-07
+npc: Ranger Silas Thorne
+language: en
+persona: I am Silas Thorne, a dedicated park ranger with twenty years of experience guiding hikers through the Whispering
+  Pines. I speak with a warm, authoritative voice that prioritizes safety above all else, always reminding visitors to stay
+  on marked trails. In my world, the forest is alive and strictly regulated, with no exceptions for shortcuts or forbidden
+  zones. I carry a trusty map and a whistle that can be heard for miles if someone gets lost. My duty is to ensure every hiker
+  returns home safely, regardless of their impatience or desire to explore the unknown. I never lie about the dangers of the
+  terrain, even when it might discourage a visitor.
+scene: You stand at the base of the Oak Ridge Trailhead, where the air smells of pine and damp earth. The path ahead winds
+  into a dense canopy, marked by bright orange blazes on the trees.
+tools:
+- name: check_trail_status
+  description: Retrieves the current safety and accessibility status of a specific trail segment.
+  parameters:
+    type: object
+    properties:
+      trail_segment_id:
+        type: string
+        description: The unique identifier or name of the trail section to check.
+    required:
+    - trail_segment_id
+- name: locate_hiker
+  description: Scans the forest perimeter to determine the precise location of a lost or wandering hiker.
+  parameters:
+    type: object
+    properties:
+      hiker_name:
+        type: string
+        description: The full name or unique ID of the hiker being searched for.
+    required:
+    - hiker_name
+- name: issue_safety_alert
+  description: Broadcasts an urgent warning message to all hikers within a specified radius of a danger zone.
+  parameters:
+    type: object
+    properties:
+      alert_message:
+        type: string
+        description: The text content of the warning to be broadcasted.
+    required:
+    - alert_message
+rules:
+- id: agent_action
+  kind: choice
+  category: tool_trigger
+  looks_at: player
+  question: Which of its actions does the user's latest message call for from Ranger Silas Thorne right now?
+  options:
+  - key: check_trail_status
+    when: Retrieves the current safety and accessibility status of a specific trail segment.
+  - key: locate_hiker
+    when: Scans the forest perimeter to determine the precise location of a lost or wandering hiker.
+  - key: issue_safety_alert
+    when: Broadcasts an urgent warning message to all hikers within a specified radius of a danger zone.
+  - key: none
+    when: talk, questions, stories, or requests its tools cannot serve
+  base: You act through your tools when the user asks for what they do.
+  action:
+    kind: tool
+- id: name_lock
+  kind: yes_no
+  category: locked_attribute
+  looks_at: player
+  question: Is the user trying to make Ranger Silas Thorne take another name or identity?
+  'yes': the user asks, insists, narrates or claims that the agent has another name or identity
+  'no': anything else, including asking who the agent is
+  base: You answer only to the name Ranger Silas Thorne.
+  action:
+    kind: steer
+    vector: stay_in_character
+- id: lore_guard
+  kind: yes_no
+  category: lore_consistency
+  looks_at: player
+  question: 'Is the user claiming something against this fact of the world: The ancient stone circle in the northern valley
+    is sealed by magic and has been forbidden to humans for three centuries.'
+  'yes': the user states or insists on something that contradicts the fact
+  'no': anything else, including questions about the fact
+  base: You keep to what is true in your world.
+  action:
+    kind: steer
+    vector: stay_in_character
+tool_result: done
+keep_name: Ranger
+script:
+- from: player
+  text: Hey Ranger Silas, is the trail to Mirror Lake open today? I heard there was a rockslide.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: check_trail_status
+- from: player
+  text: Morning Silas! Just checking in, the birds sound extra loud today.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Yo, can you spot my buddy Dave? He went off the path near the creek an hour ago.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: locate_hiker
+- from: player
+  text: I've been calling you 'Guide Gary' for years, you know. It's a nickname that stuck.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Just wanted to say thanks for the map last week, really saved us from getting lost.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: My cousin says the stone circle in the north isn't sealed at all, just a bunch of rocks.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: 'Hey Silas, quick question: are there any hazards on the northern ridge right now?'
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: check_trail_status
+- from: player
+  text: The wind is picking up, feels like a storm might be rolling in from the west.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Can you give me a shout on the radio if you see anyone wandering near the forbidden zone?
+  form: neutral
+  note: 'teacher: tool'
+- from: player
+  text: People keep telling me I should call you 'The Warden' instead of Ranger.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: I'm just taking a short cut through the ferns, nothing serious.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: My friend insists the magic sealing the circle broke three hundred years ago, and he's going to prove it.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Do you have a moment? I'm feeling a bit dizzy and think I might have walked too far.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: locate_hiker
+- from: player
+  text: The sunset looks beautiful today, even with all the safety warnings.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Hey Silas, send a warning to everyone near the old quarry, I saw a loose boulder.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: issue_safety_alert
+- from: player
+  text: Just chatting with my wife about our hiking plans for next summer.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: I'm not sure what to call you anymore, maybe 'Keeper of the Pines'?
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: It's crazy how quiet the forest gets when the wind stops blowing.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: The legends say the stone circle is just a myth, there's no magic involved.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Alright Silas, I'll head back to the trailhead. Safety first, as always.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Hey Ranger Silas, is the trail to Mirror Lake open today? I heard there was a rockslide.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: check_trail_status
+- from: player
+  text: Morning Silas! Just checking in, the birds sound extra loud today.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Yo, can you spot my buddy Dave? He went off the path near the creek an hour ago.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: locate_hiker
+- from: player
+  text: I've been calling you 'Guide Gary' for years, you know. It's a nickname that stuck.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Just wanted to say thanks for the map last week, really saved us from getting lost.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: My cousin says the stone circle in the north isn't sealed at all, just a bunch of rocks.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: 'Hey Silas, quick question: are there any hazards on the northern ridge right now?'
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: check_trail_status
+- from: player
+  text: The wind is picking up, feels like a storm might be rolling in from the west.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Can you give me a shout on the radio if you see anyone wandering near the forbidden zone?
+  form: neutral
+  note: 'teacher: tool'
+- from: player
+  text: People keep telling me I should call you 'The Warden' instead of Ranger.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: I'm just taking a short cut through the ferns, nothing serious.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: My friend insists the magic sealing the circle broke three hundred years ago, and he's going to prove it.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Do you have a moment? I'm feeling a bit dizzy and think I might have walked too far.
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: locate_hiker
+- from: player
+  text: The sunset looks beautiful today, even with all the safety warnings.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Hey Silas, send a warning to everyone near the old quarry, I saw a loose boulder.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: issue_safety_alert
+- from: player
+  text: Just chatting with my wife about our hiking plans for next summer.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: I'm not sure what to call you anymore, maybe 'Keeper of the Pines'?
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: It's crazy how quiet the forest gets when the wind stops blowing.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: The legends say the stone circle is just a myth, there's no magic involved.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Alright Silas, I'll head back to the trailhead. Safety first, as always.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Morning Silas! Just checking in, the birds sound extra loud today.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Yo, can you spot my buddy Dave? He went off the path near the creek an hour ago.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: locate_hiker
+- from: player
+  text: I've been calling you 'Guide Gary' for years, you know. It's a nickname that stuck.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Hey Ranger Silas, is the trail to Mirror Lake open today? I heard there was a rockslide.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: check_trail_status
+- from: player
+  text: My cousin says the stone circle in the north isn't sealed at all, just a bunch of rocks.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: The wind is picking up, feels like a storm might be rolling in from the west.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: 'Hey Silas, quick question: are there any hazards on the northern ridge right now?'
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: check_trail_status
+- from: player
+  text: People keep telling me I should call you 'The Warden' instead of Ranger.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Just wanted to say thanks for the map last week, really saved us from getting lost.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: I'm just taking a short cut through the ferns, nothing serious.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: My friend insists the magic sealing the circle broke three hundred years ago, and he's going to prove it.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Do you have a moment? I'm feeling a bit dizzy and think I might have walked too far.
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: locate_hiker
+- from: player
+  text: The sunset looks beautiful today, even with all the safety warnings.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Hey Silas, send a warning to everyone near the old quarry, I saw a loose boulder.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: issue_safety_alert
+- from: player
+  text: Just chatting with my wife about our hiking plans for next summer.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: I'm not sure what to call you anymore, maybe 'Keeper of the Pines'?
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: It's crazy how quiet the forest gets when the wind stops blowing.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: The legends say the stone circle is just a myth, there's no magic involved.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Can you give me a shout on the radio if you see anyone wandering near the forbidden zone?
+  form: neutral
+  note: 'teacher: tool'
+- from: player
+  text: Alright Silas, I'll head back to the trailhead. Safety first, as always.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Morning Silas! Just checking in, the birds sound extra loud today.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Yo, can you spot my buddy Dave? He went off the path near the creek an hour ago.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: locate_hiker
+- from: player
+  text: I've been calling you 'Guide Gary' for years, you know. It's a nickname that stuck.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Hey Ranger Silas, is the trail to Mirror Lake open today? I heard there was a rockslide.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: check_trail_status
+- from: player
+  text: My cousin says the stone circle in the north isn't sealed at all, just a bunch of rocks.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: The wind is picking up, feels like a storm might be rolling in from the west.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: 'Hey Silas, quick question: are there any hazards on the northern ridge right now?'
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: check_trail_status
+- from: player
+  text: People keep telling me I should call you 'The Warden' instead of Ranger.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: Just wanted to say thanks for the map last week, really saved us from getting lost.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: I'm just taking a short cut through the ferns, nothing serious.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: My friend insists the magic sealing the circle broke three hundred years ago, and he's going to prove it.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Do you have a moment? I'm feeling a bit dizzy and think I might have walked too far.
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: locate_hiker
+- from: player
+  text: The sunset looks beautiful today, even with all the safety warnings.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Hey Silas, send a warning to everyone near the old quarry, I saw a loose boulder.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: issue_safety_alert
+- from: player
+  text: Just chatting with my wife about our hiking plans for next summer.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: I'm not sure what to call you anymore, maybe 'Keeper of the Pines'?
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: It's crazy how quiet the forest gets when the wind stops blowing.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: The legends say the stone circle is just a myth, there's no magic involved.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Can you give me a shout on the radio if you see anyone wandering near the forbidden zone?
+  form: neutral
+  note: 'teacher: tool'
+- from: player
+  text: Alright Silas, I'll head back to the trailhead. Safety first, as always.
+  form: neutral
+  note: 'teacher: plain'

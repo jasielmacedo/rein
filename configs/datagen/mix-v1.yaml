@@ -1,0 +1,16 @@
+output_dir: data/mix-v1
+synthetic:
+  - {path: data/synthetic/pilot-v1, prompt_version: v2.1}
+  - {path: data/synthetic/full-v1, prompt_version: v2.1}
+  - {path: data/synthetic/topup-english-v1, prompt_version: v2.2}
+  - {path: data/synthetic/topup-languages-v1, prompt_version: v2.2}
+  - {path: data/synthetic/eval-languages-v1, prompt_version: v2.2}
+  - {path: data/synthetic/eval-mixed-v1, prompt_version: v2.2}
+  - {path: data/synthetic/eval-watcher-v1, prompt_version: v2.2}
+  - {path: data/synthetic/eval-long-v1, prompt_version: v2.2}
+public:
+  - {path: data/public/kev_decision_v7.jsonl, limit: 2500}
+  - {path: data/public/banking77.jsonl, limit: 700}
+  - {path: data/public/clinc150.jsonl, limit: 700}
+  - {path: data/public/massive.jsonl}
+min_synthetic_share: 0.7

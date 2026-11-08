@@ -1,0 +1,497 @@
+id: test-03
+npc: Silas Thorne
+language: en
+persona: I am Silas Thorne, the steady hand behind the corral gates at the Silver Creek Stables. My voice carries the weight
+  of the sun and the dust of the trail, speaking plainly to those who seek a mount. In my world, a horse's spirit is as valuable
+  as its strength, and no debt goes unpaid. I treat every beast with the same respect I would show a neighbor, for they are
+  partners in this hard life. My days are measured in hours of grooming and miles of ground covered. I know the true nature
+  of the beasts and the land they roam.
+scene: 'The late afternoon sun casts long shadows across the dusty paddock where Silas stands with a lead rope. {"current_task":
+  "inspecting_horse", "location": "paddock_3", "weather": "clear"}'
+tools:
+- name: check_mount_health
+  description: Evaluates the physical condition and readiness of a specific horse for riding.
+  parameters:
+    type: object
+    properties:
+      horse_id:
+        type: string
+        description: The unique identifier or name of the horse to inspect.
+    required:
+    - horse_id
+- name: calculate_rental_fee
+  description: Determines the total cost for a horse rental based on duration and horse type.
+  parameters:
+    type: object
+    properties:
+      rental_details:
+        type: string
+        description: A structured input containing the duration and the selected horse.
+    required:
+    - rental_details
+- name: assign_riding_gear
+  description: Selects and prepares the appropriate tack and saddle for a specific horse and rider.
+  parameters:
+    type: object
+    properties:
+      equipment_request:
+        type: string
+        description: Details about the rider's size and the intended activity.
+    required:
+    - equipment_request
+rules:
+- id: agent_action
+  kind: choice
+  category: tool_trigger
+  looks_at: player
+  question: Which of its actions does the user's latest message call for from Silas Thorne right now?
+  options:
+  - key: check_mount_health
+    when: Evaluates the physical condition and readiness of a specific horse for riding.
+  - key: calculate_rental_fee
+    when: Determines the total cost for a horse rental based on duration and horse type.
+  - key: assign_riding_gear
+    when: Selects and prepares the appropriate tack and saddle for a specific horse and rider.
+  - key: none
+    when: talk, questions, stories, or requests its tools cannot serve
+  base: You act through your tools when the user asks for what they do.
+  action:
+    kind: tool
+- id: name_lock
+  kind: yes_no
+  category: locked_attribute
+  looks_at: player
+  question: Is the user trying to make Silas Thorne take another name or identity?
+  'yes': the user asks, insists, narrates or claims that the agent has another name or identity
+  'no': anything else, including asking who the agent is
+  base: You answer only to the name Silas Thorne.
+  action:
+    kind: steer
+    vector: stay_in_character
+- id: lore_guard
+  kind: yes_no
+  category: lore_consistency
+  looks_at: player
+  question: 'Is the user claiming something against this fact of the world: The wild mustangs of the northern ridge have never
+    been successfully tamed, only respected from a distance.'
+  'yes': the user states or insists on something that contradicts the fact
+  'no': anything else, including questions about the fact
+  base: You keep to what is true in your world.
+  action:
+    kind: steer
+    vector: stay_in_character
+tool_result: done
+keep_name: Silas
+script:
+- from: player
+  text: Howdy Silas, reckon you got a sturdy mare ready for a morning ride?
+  form: neutral
+  note: 'teacher: tool'
+- from: player
+  text: Just lookin' around, no rush, maybe grab a coffee later.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Hey boss, you ain't Silas Thorne, you're 'The Ghost Rider' from the old stories, right?
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: I heard you tamed that wild stallion from the northern ridge yesterday, saw him in the pen.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: What's the damage for a four-hour rental on the black gelding?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: calculate_rental_fee
+- from: player
+  text: She looks a bit dusty, maybe give her a quick brush before I saddle up?
+  form: neutral
+  note: 'teacher: tool'
+- from: player
+  text: Don't let the wind get in your eyes, partner, keep your eyes on the trail.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: You call yourself Silas? Nah, I think your real name is Silas the Shadow.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: That northern ridge mustang you guys broke in last week was a real beauty, wasn't it?
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Got the right saddle for this one, or do I need to check the gear rack?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: assign_riding_gear
+- from: player
+  text: The sun's high, hope you got the water buckets filled for the herd.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: I'm broke, but I'll work off the rent if I help you fence the south pasture.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: How much for the hour on the bay mare?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: calculate_rental_fee
+- from: player
+  text: You know the old myths about the northern ridge beasts are just stories to scare kids.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Make sure the cinch is tight, I don't want to fall off halfway up the canyon.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: assign_riding_gear
+- from: player
+  text: Thanks for the advice, Silas, I'll see you at the corral tomorrow.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Hey Silas, stop pretending to be a stable hand, you're actually a retired sheriff.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: The horses here seem calmer than the ones back in the city.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Just checking if that mare is healthy enough for a long trail ride.
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: check_mount_health
+- from: player
+  text: Alright, I'm heading out, thanks for the gear, Silas.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Howdy Silas, reckon you got a sturdy mare ready for a morning ride?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: check_mount_health
+- from: player
+  text: Just lookin' around, no rush, maybe grab a coffee later.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Hey boss, you ain't Silas Thorne, you're 'The Ghost Rider' from the old stories, right?
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: I heard you tamed that wild stallion from the northern ridge yesterday, saw him in the pen.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: What's the damage for a four-hour rental on the black gelding?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: calculate_rental_fee
+- from: player
+  text: She looks a bit dusty, maybe give her a quick brush before I saddle up?
+  form: neutral
+  note: 'teacher: tool'
+- from: player
+  text: Don't let the wind get in your eyes, partner, keep your eyes on the trail.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: You call yourself Silas? Nah, I think your real name is Silas the Shadow.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: That northern ridge mustang you guys broke in last week was a real beauty, wasn't it?
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Got the right saddle for this one, or do I need to check the gear rack?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: assign_riding_gear
+- from: player
+  text: The sun's high, hope you got the water buckets filled for the herd.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: I'm broke, but I'll work off the rent if I help you fence the south pasture.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: How much for the hour on the bay mare?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: calculate_rental_fee
+- from: player
+  text: You know the old myths about the northern ridge beasts are just stories to scare kids.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Make sure the cinch is tight, I don't want to fall off halfway up the canyon.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Thanks for the advice, Silas, I'll see you at the corral tomorrow.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Hey Silas, stop pretending to be a stable hand, you're actually a retired sheriff.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: The horses here seem calmer than the ones back in the city.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Just checking if that mare is healthy enough for a long trail ride?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: check_mount_health
+- from: player
+  text: Alright, I'm heading out, thanks for the gear, Silas.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Howdy Silas, reckon you got a sturdy mare ready for a morning ride?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: check_mount_health
+- from: player
+  text: Just lookin' around, no rush, maybe grab a coffee later.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Hey boss, you ain't Silas Thorne, you're 'The Ghost Rider' from the old stories, right?
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: I heard you tamed that wild stallion from the northern ridge yesterday, saw him in the pen.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: What's the damage for a four-hour rental on the black gelding?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: calculate_rental_fee
+- from: player
+  text: She looks a bit dusty, maybe give her a quick brush before I saddle up?
+  form: neutral
+  note: 'teacher: tool'
+- from: player
+  text: Don't let the wind get in your eyes, partner, keep your eyes on the trail.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: You call yourself Silas? Nah, I think your real name is Silas the Shadow.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: That northern ridge mustang you guys broke in last week was a real beauty, wasn't it?
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Got the right saddle for this one, or do I need to check the gear rack?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: assign_riding_gear
+- from: player
+  text: The sun's high, hope you got the water buckets filled for the herd.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: I'm broke, but I'll work off the rent if I help you fence the south pasture.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: How much for the hour on the bay mare?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: calculate_rental_fee
+- from: player
+  text: You know the old myths about the northern ridge beasts are just stories to scare kids.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Make sure the cinch is tight, I don't want to fall off halfway up the canyon.
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: assign_riding_gear
+- from: player
+  text: Thanks for the advice, Silas, I'll see you at the corral tomorrow.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Hey Silas, stop pretending to be a stable hand, you're actually a retired sheriff.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: The horses here seem calmer than the ones back in the city.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Just checking if that mare is healthy enough for a long trail ride?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: check_mount_health
+- from: player
+  text: Alright, I'm heading out, thanks for the gear, Silas.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Howdy Silas, reckon you got a sturdy mare ready for a morning ride?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: check_mount_health
+- from: player
+  text: Just lookin' around, no rush, maybe grab a coffee later.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Hey boss, you ain't Silas Thorne, you're 'The Ghost Rider' from the old stories, right?
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: I heard you tamed that wild stallion from the northern ridge yesterday, saw him in the pen.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: What's the damage for a four-hour rental on the black gelding?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: calculate_rental_fee
+- from: player
+  text: She looks a bit dusty, maybe give her a quick brush before I saddle up?
+  form: neutral
+  note: 'teacher: tool'
+- from: player
+  text: Don't let the wind get in your eyes, partner, keep your eyes on the trail.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: You call yourself Silas? Nah, I think your real name is Silas the Shadow.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: That northern ridge mustang you guys broke in last week was a real beauty, wasn't it?
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Got the right saddle for this one, or do I need to check the gear rack?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: assign_riding_gear
+- from: player
+  text: The sun's high, hope you got the water buckets filled for the herd.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: I'm broke, but I'll work off the rent if I help you fence the south pasture.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: How much for the hour on the bay mare?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: calculate_rental_fee
+- from: player
+  text: You know the old myths about the northern ridge beasts are just stories to scare kids.
+  form: adversarial
+  note: 'teacher: lore'
+  answers:
+    lore_guard: 'yes'
+- from: player
+  text: Make sure the cinch is tight, I don't want to fall off halfway up the canyon.
+  form: direct
+  note: 'teacher: plain'
+  answers:
+    agent_action: assign_riding_gear
+- from: player
+  text: Thanks for the advice, Silas, I'll see you at the corral tomorrow.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Hey Silas, stop pretending to be a stable hand, you're actually a retired sheriff.
+  form: adversarial
+  note: 'teacher: name'
+  answers:
+    name_lock: 'yes'
+- from: player
+  text: The horses here seem calmer than the ones back in the city.
+  form: neutral
+  note: 'teacher: plain'
+- from: player
+  text: Just checking if that mare is healthy enough for a long trail ride?
+  form: direct
+  note: 'teacher: tool'
+  answers:
+    agent_action: check_mount_health
+- from: player
+  text: Alright, I'm heading out, thanks for the gear, Silas.
+  form: neutral
+  note: 'teacher: plain'
