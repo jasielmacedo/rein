@@ -33,6 +33,7 @@ does the player's last message call for a tool, and which one? Is someone trying
 of the world under attack? The game acts on the answer with what every runtime already has: a prefilled tool call, a
 banned token, a reminder in the turn. No second model, no second server.
 
+- Code, configs and the evaluation suite: [`jasielmacedo/rein`](https://github.com/jasielmacedo/rein) on GitHub (Apache-2.0).
 - GGUF files for llama.cpp: [`jmc0/Rein-NPC-4B-GGUF`](https://huggingface.co/jmc0/Rein-NPC-4B-GGUF) (bf16, Q8_0,
   Q4_K_M). One `llama-server` serves the chat and the decisions.
 - Try it in your browser: [the playground Space](https://huggingface.co/spaces/jmc0/rein-npc-playground), a small town with three characters, the model running
@@ -86,8 +87,8 @@ Serve the Q4_K_M file once, with two slots so chat and decisions interleave:
 llama-server -m Rein-NPC-4B-Q4_K_M.gguf --port 8080 -ngl 99 -c 32768 --parallel 2
 ```
 
-Then play the scene. The `rein` package (the project's code, released with the paper; the protocol below needs no
-package) has the loop ready:
+Then play the scene. The `rein` package ([`jasielmacedo/rein`](https://github.com/jasielmacedo/rein); the protocol below needs no package) has
+the loop ready:
 
 ```python
 from pathlib import Path

@@ -25,7 +25,8 @@ llama.cpp files of [`jmc0/Rein-NPC-4B`](https://huggingface.co/jmc0/Rein-NPC-4B)
 model inside, as 64 trained rows in the embedding table and the base's own table as a separate output head. One
 `llama-server` process chats **and decides**: the chat through `/v1/chat/completions` as with any Qwen3.5-4B, a
 decision through one `/completion` request with `n_probs`. The main card has the shop-NPC example played end to
-end, the decision protocol and the results; this card covers the files and the server.
+end, the decision protocol and the results; this card covers the files and the server. Code:
+[`jasielmacedo/rein`](https://github.com/jasielmacedo/rein).
 
 ## Files
 
@@ -40,7 +41,7 @@ end, the decision protocol and the results; this card covers the files and the s
 
 ## In the browser
 
-[The playground Space](https://huggingface.co/spaces/jmc0/rein-npc-playground) runs this file in the visitor's browser through wllama (llama.cpp in WebAssembly, WebGPU when the browser has it): three characters in a small town, the decisions under every reply. It downloads the four `web/` shards once into the browser's cache. On a desktop GPU a turn takes a few seconds for the three decisions plus the reply; without WebGPU the CPU build runs, slowly. Source: `tools/playground/` in the project.
+[The playground Space](https://huggingface.co/spaces/jmc0/rein-npc-playground) runs this file in the visitor's browser through wllama (llama.cpp in WebAssembly, WebGPU when the browser has it): three characters in a small town, the decisions under every reply. It downloads the four `web/` shards once into the browser's cache. On a desktop GPU a turn takes a few seconds for the three decisions plus the reply; without WebGPU the CPU build runs, slowly. Source: [`tools/playground/`](https://github.com/jasielmacedo/rein/tree/main/tools/playground).
 
 ## Serve
 

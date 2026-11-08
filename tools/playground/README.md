@@ -29,7 +29,7 @@ The model (3.07 GB at Q4_K_M, four files) is downloaded once from
 machine; nothing you type leaves it. WebGPU (Chrome, Edge) is the fast path; without it the CPU build runs, slowly.
 The page lets you delete the cached files and download them again.
 
-Source: `tools/playground/` in the Rein repository. The decision protocol and the acting rule are documented on the
+Source: [`tools/playground/`](https://github.com/jasielmacedo/rein/tree/main/tools/playground) in the [Rein repository](https://github.com/jasielmacedo/rein). The decision protocol and the acting rule are documented on the
 model card.
 
 ## Development
