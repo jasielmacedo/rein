@@ -2,7 +2,9 @@
 sent as token ids, and the labels' next-token log-probabilities are the decision. No second model, no PyTorch."""
 
 import math
+from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
 import httpx
 from transformers import AutoTokenizer
@@ -29,6 +31,18 @@ def label_probabilities(
     return tuple(weight / total for weight in weights)
 
 
+def decision_body(prompt: str | Sequence[int]) -> dict[str, Any]:
+    """A decision as llama.cpp's /completion takes it: one predicted token and its top log-probabilities. The prompt
+    is Rein's layout as text or as token ids."""
+    return {
+        "prompt": prompt if isinstance(prompt, str) else list(prompt),
+        "n_predict": 1,
+        "n_probs": TOP_LOGPROBS,
+        "temperature": 0.0,
+        "cache_prompt": True,
+    }
+
+
 class ServerDecisionBackend:
     def __init__(self, url: str, run_dir: Path, encoder: RequestEncoder | None = None) -> None:
         meta = read_meta(run_dir)
@@ -36,9 +50,8 @@ class ServerDecisionBackend:
         self.temperature = float(meta["temperature"])
         self.encoder = encoder or build_encoder(meta, AutoTokenizer.from_pretrained(meta["base_repo"]))
 
-    def _next_token_logprobs(self, prompt: list[int]) -> dict[int, float]:
-        body = {"prompt": prompt, "n_predict": 1, "n_probs": TOP_LOGPROBS, "temperature": 0.0, "cache_prompt": True}
-        reply = httpx.post(f"{self.url}/completion", json=body, timeout=TIMEOUT_S)
+    def next_token_logprobs(self, prompt: str | Sequence[int]) -> dict[int, float]:
+        reply = httpx.post(f"{self.url}/completion", json=decision_body(prompt), timeout=TIMEOUT_S)
         reply.raise_for_status()
         top = reply.json()["completion_probabilities"][0]["top_logprobs"]
         return {int(item["id"]): float(item["logprob"]) for item in top}
@@ -49,7 +62,7 @@ class ServerDecisionBackend:
         for question in encoded.questions:
             if not question.label_token_ids:
                 raise ValueError("the server backend needs the lettered layout (readout labels)")
-            logprobs = self._next_token_logprobs([*encoded.state_ids, *question.rows[0]])
+            logprobs = self.next_token_logprobs([*encoded.state_ids, *question.rows[0]])
             probabilities = label_probabilities(logprobs, question.label_token_ids, self.temperature)
             decisions[question.question_id] = dict(zip(question.option_keys, probabilities, strict=True))
         return decisions

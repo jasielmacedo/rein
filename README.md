@@ -154,13 +154,17 @@ reply. It downloads 3 GB once into the browser's cache; Chrome or Edge with WebG
 **With llama.cpp.**
 
 ```bash
-huggingface-cli download jmc0/Rein-NPC-4B-GGUF Rein-NPC-4B-Q4_K_M.gguf rein_config.json examples/shop-keeper.yaml --local-dir rein-npc
+hf download jmc0/Rein-NPC-4B-GGUF Rein-NPC-4B-Q4_K_M.gguf rein_config.json examples/shop-keeper.yaml \
+  examples/decide.json examples/reply.json --local-dir rein-npc
 llama-server -m rein-npc/Rein-NPC-4B-Q4_K_M.gguf --port 8080 -ngl 99 -c 32768 --parallel 2
+curl -s localhost:8080/completion -H "content-type: application/json" -d @rein-npc/examples/decide.json
+curl -s localhost:8080/v1/chat/completions -H "content-type: application/json" -d @rein-npc/examples/reply.json
 ```
 
-The chat goes through `/v1/chat/completions` as with any Qwen3.5-4B. A decision is one `/completion` request; the
-[model card](https://huggingface.co/jmc0/Rein-NPC-4B#what-a-decision-looks-like) shows the exact prompt and a
-thirty-line client in plain Python, and the raw prompts the game sends.
+Every player turn is these two requests: a completion of one token decides, then the chat replies, with the tool
+call already opened, tool calls banned or a reminder added. No package is needed for either. The
+[model card](https://huggingface.co/jmc0/Rein-NPC-4B#a-shop-npc-end-to-end) walks a shop NPC through both with the
+raw prompts, and maps them to LLMUnity, the llama.cpp C API, wllama, vLLM and Transformers.
 
 **With this package.**
 

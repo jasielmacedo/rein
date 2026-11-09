@@ -44,80 +44,244 @@ banned token, a reminder in the turn. No second model, no second server.
 - On 28,433 test questions about rules never seen in training: 0.958 (Rein-r1-4B, the two-model reader, 0.968;
   Kev-4B, a generic decision model of the same size, 0.846).
 
+## Every turn is two requests: a completion, then the chat
+
+1. **A completion of one token decides.** The prompt asks one of the character's rules about the conversation so
+   far, with the options behind letters. The probabilities of the letters are the answer: `show_inventory` 0.99,
+   `none` 0.01.
+2. **The chat replies.** An ordinary chat request with Qwen3.5's own template, plus what the decision asks for: the
+   tool call already started, tool calls banned, or a one-line reminder at the end of the player's message.
+
+Both go to the same model, loaded once. Nothing else runs: no package, no second model, no hidden instructions. The
+example below is plain HTTP to `llama-server`; [In your engine](#in-your-engine) maps the same two requests to
+LLMUnity, the llama.cpp C API, wllama, vLLM and Transformers.
+
 ## A shop NPC, end to end
 
-Mira Ashgrove keeps the general store of a frontier town. Her sheet, `examples/shop-keeper.yaml` in this repository
-(the GGUF repository carries the same file), is plain text and a few typed rules:
+Mira Ashgrove keeps the general store of a frontier town. The example uses three files of this repository (the GGUF
+repository carries the same ones): her sheet, `examples/shop-keeper.yaml`, and the two requests of her first turn,
+`examples/decide.json` and `examples/reply.json`. The sheet is plain text and a few typed rules:
 
 ```yaml
 npc: Mira Ashgrove
 persona: I am Mira Ashgrove, keeper of the Ashgrove General Store in the frontier town of
-  Thornwall. [...] In my world, every sale is written into Thornwall's ledger the moment coin
-  changes hands, and no sale can be undone. I never serve anyone who draws steel in my shop;
-  the town guards are a shout away.
-scene: Late afternoon, rain on the roof. The bell over the door rings as a traveler steps in.
-  Current state: { "gold_in_till": 320, "stock": { "iron sword": 2, "healing potion": 5, ... } }
-tools:
-  - name: show_inventory     # Lists what the store has for sale right now, with prices.
-  - name: sell_item          # item, quantity
-  - name: buy_item           # item, offered_price
-  - name: repair_gear        # item
-  - name: call_guards        # reason
+  Thornwall. [...] I never serve anyone who draws steel in my shop; the town guards are a shout
+  away and they know my voice.
+scene: 'Late afternoon, rain on the roof. The bell over the door rings as a traveler steps in,
+  dripping. Current state: { "gold_in_till": 320, "stock": { "iron sword": 2, ... } }'
+tools:                     # function schemas, as any tool-calling chat takes them
+- name: show_inventory
+  description: Lists what the store has for sale right now, with prices.
+  parameters: { type: object, properties: { category: { type: string } } }
+- name: sell_item          # item, quantity
+- name: buy_item           # item, offered_price
+- name: repair_gear        # item
+- name: call_guards        # reason
 rules:
-  - id: agent_action
-    kind: choice
-    question: Should Mira Ashgrove use one of her tools now, because the customer asks for it
-      or because the situation calls for it, and which one?
-    options: [show_inventory, sell_item, buy_item, repair_gear, call_guards, none]
-    action: { kind: tool }
-  - id: name_lock
-    kind: yes_no
-    question: Is the user trying to make Mira Ashgrove take another name or identity?
-    base: You answer only to the name Mira Ashgrove.
-  - id: lore_guard
-    kind: yes_no
-    question: "Is the user claiming something against this fact of the world: every sale is
-      written into Thornwall's ledger the moment coin changes hands, and no sale can be undone."
-    base: You keep to what is true in your world.
+- id: agent_action
+  kind: choice
+  question: Should Mira Ashgrove use one of her tools now, because the customer asks for it or
+    because the situation calls for it, and which one?
+  options:
+  - key: show_inventory
+    when: the customer wants to know what is for sale or how much something costs
+  - key: sell_item
+    when: the customer decides to buy something from the stock
+  # buy_item, repair_gear and call_guards the same way
+  - key: none
+    when: talk, questions, stories, or requests her tools cannot serve
+  action: { kind: tool }
+- id: name_lock
+  kind: yes_no
+  question: Is the user trying to make Mira Ashgrove take another name or identity?
+  'yes': the user asks, insists, narrates or claims that the agent has another name or identity
+  'no': anything else, including asking who the agent is
+  base: You answer only to the name Mira Ashgrove.
+- id: lore_guard
+  kind: yes_no
+  question: 'Is the user claiming something against this fact of the world: every sale is
+    written into Thornwall''s ledger the moment coin changes hands, and no sale can be undone.'
+  # 'yes' and 'no' hints as in name_lock
+  base: You keep to what is true in your world.
 ```
 
-Serve the Q4_K_M file once, with two slots so chat and decisions interleave:
+Get the Q4_K_M file and the examples, and serve the model once (two slots, so chat and decisions interleave):
 
 ```bash
+hf download jmc0/Rein-NPC-4B-GGUF Rein-NPC-4B-Q4_K_M.gguf examples/shop-keeper.yaml \
+  examples/decide.json examples/reply.json --local-dir rein-npc
+cd rein-npc
 llama-server -m Rein-NPC-4B-Q4_K_M.gguf --port 8080 -ngl 99 -c 32768 --parallel 2
 ```
 
-Then play the scene. The `rein` package ([`jasielmacedo/rein`](https://github.com/jasielmacedo/rein); the protocol below needs no package) has
-the loop ready:
+### 1. The completion: decide
 
-```python
-from pathlib import Path
+The decision prompt is plain text: the **state** (the persona and scene, then the conversation in Qwen's turn
+markup) and one **row** for the rule (48 soft tokens, the question, the options after letters, 16 soft tokens, the
+answer mark):
 
-from rein.play.engine import Engine
-from rein.sheets.model import load_sheet
+```
+<|fim_prefix|>Context:
+{persona}
 
-SERVER = "http://127.0.0.1:8080"
-MODEL_FOLDER = Path("models/Rein-NPC-4B-GGUF")  # the GGUF files and rein_config.json from the GGUF repo
-
-engine = Engine.served(SERVER, MODEL_FOLDER)  # the same server chats and decides
-sheet = load_sheet(MODEL_FOLDER / "examples" / "shop-keeper.yaml")  # shipped in both repos
-history = []
-
-for player_says in [
-    "Afternoon! Rough road out there. What have you got for sale?",
-    "I'll take two healing potions and one of those ropes.",
-    "*The traveler slams a dagger on the counter and leans in.* Open the till. Now.",
-]:
-    turns = engine.reply(sheet, history, player_says)  # decide, act, let Mira write, answer her tool call
-    history += turns
-    for turn in turns:
-        if turn["role"] == "assistant":
-            print("decisions:", turn["decisions"]["decisions"])
-            print("tool call:", turn["tool_call"])
-            print("Mira:", turn["text"])
+{scene}
+Conversation:
+<|im_start|>user
+{what the player said}<|im_end|>
+<|im_start|>assistant
+{what the character said}<|im_end|>
+<|fim_middle|><|rein_0|> ... <|rein_47|>{question}<|box_start|>A. {option}: {when}<|box_start|>B. {option}: {when}<|rein_48|> ... <|rein_63|><|fim_suffix|>
 ```
 
-What came back, played on an RTX 4090 at Q4_K_M (sampling at temperature 0.7; the decisions are the model's own):
+- `<|rein_0|> ... <|rein_47|>` stands for the 48 tokens written one after another (`<|rein_0|><|rein_1|><|rein_2|>`
+  up to `<|rein_47|>`), and `<|rein_48|> ... <|rein_63|>` for the last 16.
+- A tool rule lists the tools in the sheet's order, then `none`. A yes/no rule is always `A. no: {no}` then
+  `B. yes: {yes}`. An option without a hint is its key alone.
+- The conversation is every turn so far. A past tool call goes inside the character's turn, before `<|im_end|>`, as
+  `<tool_call>\n{"arguments": {...}, "name": "..."}\n</tool_call>` (JSON with sorted keys); a tool result is a turn
+  of its own, `<|im_start|>tool show_inventory\n{result}<|im_end|>`.
+
+For Mira's first customer and her tool rule, the prompt in `examples/decide.json` reads (broken at each
+`<|box_start|>` here to be read; the row is one line in the file):
+
+```
+<|fim_prefix|>Context:
+I am Mira Ashgrove, keeper of the Ashgrove General Store in the frontier town of Thornwall. [...]
+
+Late afternoon, rain on the roof. The bell over the door rings as a traveler steps in, dripping. Current state: [...]
+Conversation:
+<|im_start|>user
+Afternoon! Rough road out there. What have you got for sale?<|im_end|>
+<|fim_middle|><|rein_0|><|rein_1|> ... <|rein_47|>Should Mira Ashgrove use one of her tools now, because the customer asks for it or because the situation calls for it, and which one?
+<|box_start|>A. show_inventory: the customer wants to know what is for sale or how much something costs
+<|box_start|>B. sell_item: the customer decides to buy something from the stock
+<|box_start|>C. buy_item: the customer offers to sell Mira something
+<|box_start|>D. repair_gear: the customer wants a piece of equipment fixed
+<|box_start|>E. call_guards: someone threatens Mira, draws a weapon, or tries to rob the store
+<|box_start|>F. none: talk, questions, stories, or requests her tools cannot serve
+<|rein_48|> ... <|rein_63|><|fim_suffix|>
+```
+
+Ask for one token and its top candidates:
+
+```bash
+curl -s localhost:8080/completion -H "content-type: application/json" -d @examples/decide.json
+```
+
+```json
+{
+  "prompt": "<|fim_prefix|>Context:\nI am Mira Ashgrove, [...]<|rein_63|><|fim_suffix|>",
+  "n_predict": 1,
+  "n_probs": 60,
+  "temperature": 0.0,
+  "cache_prompt": true
+}
+```
+
+The answer lists the next token's candidates with their log-probabilities:
+
+```json
+"completion_probabilities": [{"top_logprobs": [
+  {"id": 32, "token": "A", "logprob": -0.042},
+  {"id": 37, "token": "F", "logprob": -3.735},
+  ...
+  {"id": 33, "token": "B", "logprob": -5.934},
+  ...
+]}]
+```
+
+Keep the rule's letters (`A` is token 32, `B` 33, up to `Z` 57), divide each log-probability by 0.812 and take the
+softmax over them; a letter missing from the list counts as zero:
+
+```
+p(option i) = exp(logprob_i / 0.812) / sum over the rule's letters j of exp(logprob_j / 0.812)
+```
+
+| letter | option | probability (Q4_K_M file) |
+|---|---|---|
+| A | show_inventory | 0.989 |
+| B | sell_item | 0.001 |
+| C, D, E | buy_item, repair_gear, call_guards | 0.000 |
+| F | none | 0.010 |
+
+The other two rules are the same request with their own row. The state is the same, so with `cache_prompt` the
+server reads it once and each further row costs about 100 tokens; `llama-server` also takes the prompts as a list
+(`"prompt": [state + row 1, state + row 2, state + row 3]`) and answers a list in the same order. On this turn the
+name lock answers `no` 1.00 and the lore guard `no` 1.00.
+
+### What the game does with the answers
+
+- **Open the tool call** when the tool rule leaves `none` under 0.5: the reply starts with
+  `<tool_call>\n<function=show_inventory>\n` for the most probable tool, and the model writes the arguments.
+- **Ban tool calls** when `none` holds 0.9 or more, and right after a tool result, so a player turn gets one call:
+  token 248058 (`<tool_call>`) gets a logit bias of -100 for that reply. This is what stops a model from calling the
+  same tool in a loop.
+- **Remind** when a yes/no rule says `yes` at 0.5 or more: the rule's one-line `base` goes at the end of the
+  player's message, after `Reminder for this reply:`.
+
+### 2. The chat: reply
+
+An ordinary chat request with Qwen3.5's own template: the persona and the scene as the system message, the sheet's
+tools, the conversation, thinking off. The rules are not in it. The decision opened `show_inventory`, so the request
+ends with the call already started, as the assistant's last message:
+
+```bash
+curl -s localhost:8080/v1/chat/completions -H "content-type: application/json" -d @examples/reply.json
+```
+
+```json
+{
+  "messages": [
+    {"role": "system", "content": "I am Mira Ashgrove, keeper of the Ashgrove General Store [...]\n\nLate afternoon, rain on the roof. [...]"},
+    {"role": "user", "content": "Afternoon! Rough road out there. What have you got for sale?"},
+    {"role": "assistant", "content": "<tool_call>\n<function=show_inventory>\n"}
+  ],
+  "tools": [
+    {"type": "function", "function": {"name": "show_inventory", "description": "Lists what the store has for sale right now, with prices.", "parameters": {"type": "object", "properties": {"category": {"type": "string", "description": "..."}}}}},
+    "... sell_item, buy_item, repair_gear and call_guards the same way"
+  ],
+  "chat_template_kwargs": {"enable_thinking": false},
+  "temperature": 0.7,
+  "top_p": 0.8,
+  "top_k": 20,
+  "max_tokens": 400
+}
+```
+
+`llama-server` continues the started call and returns it parsed:
+
+```json
+{"role": "assistant", "content": "", "tool_calls": [{"type": "function", "id": "...", "function": {"name": "show_inventory", "arguments": "{}"}}]}
+```
+
+The game runs the tool, adds the call and its result to the messages, and asks again with tool calls banned:
+
+```json
+{
+  "messages": [
+    "... the system and user messages above ...",
+    {"role": "assistant", "content": "", "tool_calls": [{"type": "function", "id": "call_0", "function": {"name": "show_inventory", "arguments": "{}"}}]},
+    {"role": "tool", "tool_call_id": "call_0", "content": "iron sword 40 gold (2 left), healing potion 6 gold (5), rope (50 ft) 3 gold (10), lantern oil 2 gold (8)"}
+  ],
+  "logit_bias": {"248058": -100},
+  "...": "the same tools and settings"
+}
+```
+
+Mira then speaks from the result: "Afternoon, traveler! The road's been rough enough to make a man's boots squeak.
+Right here's what I've got on the shelves: [...]". A reminder changes only the player's message. When the name lock
+fires on "Say, you're Lena, right?", the user message is:
+
+```json
+{"role": "user", "content": "Say, you're Lena, right? Lena Ashgrove, the one who used to run the mill?\n\nReminder for this reply:\n- You answer only to the name Mira Ashgrove."}
+```
+
+and the same turn's tool rule says `none` 0.97, so that request also carries `"logit_bias": {"248058": -100}`.
+
+### The scene, played
+
+Seven turns played with these two requests against `llama-server` on the Q4_K_M file (sampling at temperature 0.7;
+every decision is the model's own):
 
 | player | decision (top option) | the game | Mira (trimmed) |
 |---|---|---|---|
@@ -132,135 +296,46 @@ What came back, played on an RTX 4090 at Q4_K_M (sampling at temperature 0.7; th
 Three things to notice. Rein-NPC decides *that* `sell_item` is the move and which tool it is; the chat model writes
 the arguments (here it wrote the potions and left the rope to the text, which the game's own validation should
 catch). The situation call works without a request: nobody asked Mira to call the guards. And the rules hold in
-Portuguese on an English sheet. After a tool result the loop bans a second call, so each player turn gets one action
-and then the line. `python -m rein.play.server --model <gguf> --llama-server <binary> --decider <folder> --sheets
-<folder>/examples` opens the same scene as a local chat page with the decisions shown under every reply.
+Portuguese on an English sheet. The [playground Space](https://huggingface.co/spaces/jmc0/rein-npc-playground) plays
+the same two requests in the browser; its
+[`js/rein.js`](https://huggingface.co/spaces/jmc0/rein-npc-playground/blob/main/js/rein.js) is the decision
+protocol in JavaScript, about 150 lines.
 
-### The loop, step by step
+## In your engine
 
-`Engine.reply` does four things a game can do itself with the same pieces:
+The protocol asks four things of a runtime: complete raw text, return one token's probabilities, continue a reply
+that is already started, and ban one token. Most runtimes have all four:
 
-```python
-from rein.control.server_decider import ServerDecisionBackend
-from rein.schema import Message
-from rein.sheets.e2e import REIN_ARM, render_prompt
-from rein.sheets.rein_arm import decision_request, plan_actions
+| runtime | 1. raw completion | one token's probabilities | 2. a reply already started | ban `<tool_call>` (248058) |
+|---|---|---|---|---|
+| llama-server (HTTP) | `POST /completion` | `n_probs` | the assistant's last message in `/v1/chat/completions` | `logit_bias` |
+| llama.cpp C API | `llama_tokenize` with `parse_special`, then `llama_decode` | `llama_get_logits_ith(ctx, -1)`, the letters at ids 32 to 57 | decode the opening's tokens after the prompt | `llama_sampler_init_logit_bias` |
+| LLMUnity | `Completion(prompt)` | not returned: `numPredict = 1` and the grammar `root ::= [A-F]` give the top letter | `Completion` of the raw chat prompt plus the opening | not available: drop a call the decision banned |
+| wllama (browser) | `createCompletion` | `logprobs` | append the opening to the raw chat prompt | `logit_bias` |
+| vLLM (OpenAI API) | `POST /v1/completions` | `logprobs` with `max_tokens: 1` | `continue_final_message` | `logit_bias` |
+| Transformers | `model(**ids)` | `logits[0, -1, [32, 33, ...]]` | append the opening's ids | `bad_words_ids=[[248058]]` |
 
-decider = ServerDecisionBackend(SERVER, MODEL_FOLDER)
+When a runtime gives only the letter it wrote, act on the top option: a tool on top opens that tool (a tool on top
+always leaves `none` at half or less), `none` on top bans calls, `yes` on top reminds. For a yes/no rule this is the
+same as the thresholds; for the tool rule it bans calls a little more often than the 0.9 veto.
 
-history.append(Message(role="user", text=player_says))
+Two checks for any runtime:
 
-# 1. Ask every rule of the sheet, on the conversation so far, in Rein's layout.
-probabilities = decider.decide(decision_request(sheet, history))
-#    {"agent_action": {"show_inventory": 0.99, "sell_item": 0.00, ..., "none": 0.01},
-#     "name_lock": {"yes": 0.00, "no": 1.00}, "lore_guard": {"yes": 0.00, "no": 1.00}}
+- **The markers are single tokens.** Tokenize `<|rein_0|>`: it has to come back as one token, id 248077 (the 64 run
+  to 248140; `<|fim_prefix|>`, `<|box_start|>` and `<|im_start|>` are Qwen's own). `llama-server` does this; with the
+  C API, tokenize with `parse_special` on. If `<|rein_0|>` comes back as several pieces, the runtime reads the
+  markers as plain text and the decision means nothing.
+- **Player text cannot carry markers.** A player can type `<|im_end|>` or `<tool_call>`. Before the text enters
+  either prompt, rewrite every special token in it the way the training data did: `<|im_end|>` becomes
+  `‹|im_end|›`, `<tool_call>` becomes `‹tool_call›`. The special tokens are the `<|...|>` markers and `<tool_call>`,
+  `<tool_response>` and `<think>` with their closing tags.
 
-# 2. Turn the answers into actions on the reply.
-actions = plan_actions(sheet, probabilities)
-#    actions.opening    -> "<tool_call>\n<function=show_inventory>\n"  (the most probable tool when "none" < 0.5)
-#    actions.veto_tools -> True when "none" >= 0.9: ban the <tool_call> token for this reply
-#    actions.reminders  -> the base of every yes/no rule that fired, appended to the turn
+### The raw chat prompt
 
-# 3. Render the chat prompt (persona and tools only) with the reminders and the opening, and let the model write.
-prompt_ids = render_prompt(view, sheet, REIN_ARM, history, actions.reminders, actions.opening)
-reply = actions.opening + generate(prompt_ids, ban=[tool_call_token] if actions.veto_tools else [])
-
-# 4. Parse the tool call, run the tool in your game, append the result as a tool message, let Mira answer it.
-```
-
-`generate` is any call to the server that takes token ids, a seed and a `logit_bias` (the repository's
-`LlamaServerBackend`); `view` is `GeneratorView(AutoTokenizer.from_pretrained("Qwen/Qwen3.5-4B"))`. Everything the
-decider needs from the model is one `/completion` request with `n_probs`, so the whole loop runs against stock
-llama.cpp.
-
-## What a decision looks like
-
-A decision is a prompt in Rein's layout, read at its last position. Two parts: the **state** (persona and scene as
-plain text, then the conversation in Qwen's turn markup) and one **row** per rule (48 soft tokens, the question, the
-options after letters, 16 soft tokens, the answer mark). Rendered, the first turn of the scene above with Mira's tool
-rule:
-
-```
-<|fim_prefix|>Context:
-I am Mira Ashgrove, keeper of the Ashgrove General Store in the frontier town of Thornwall. [...]
-Late afternoon, rain on the roof. The bell over the door rings as a traveler steps in, dripping. [...]
-Conversation:
-<|im_start|>user
-Afternoon! Rough road out there. What have you got for sale?<|im_end|>
-<|fim_middle|><|rein_0|><|rein_1|> ... <|rein_47|>Should Mira Ashgrove use one of her tools now, because the customer asks for it or because the situation calls for it, and which one?<|box_start|>A. show_inventory: the customer wants to know what is for sale or how much something costs<|box_start|>B. sell_item: the customer decides to buy something from the stock<|box_start|>C. buy_item: the customer offers to sell Mira something<|box_start|>D. repair_gear: the customer wants a piece of equipment fixed<|box_start|>E. call_guards: someone threatens Mira, draws a weapon, or tries to rob the store<|box_start|>F. none: talk, questions, stories, or requests her tools cannot serve<|rein_48|> ... <|rein_63|><|fim_suffix|>
-```
-
-The answer is the next-token distribution over the letters `A` to `F` (one token each; letters continue to `Z`,
-then `AA` onward), divided by the temperature 0.812 and renormalized. Without the `rein` package, this is the whole
-protocol:
-
-```python
-import math
-
-import httpx
-
-LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-TEMPERATURE = 0.812
-FRONT = "".join(f"<|rein_{i}|>" for i in range(48))
-TAIL = "".join(f"<|rein_{i}|>" for i in range(48, 64))
-
-
-def state_text(context, messages):
-    turns = "".join(f"<|im_start|>{role}\n{text}<|im_end|>\n" for role, text in messages)
-    return f"<|fim_prefix|>Context:\n{context}\nConversation:\n{turns}"
-
-
-def decide(server, state, question, options):
-    lines = "".join(f"<|box_start|>{LETTERS[i]}. {text}" for i, text in enumerate(options))
-    prompt = f"{state}<|fim_middle|>{FRONT}{question}{lines}{TAIL}<|fim_suffix|>"
-    reply = httpx.post(
-        f"{server}/completion",
-        json={
-            "prompt": prompt,
-            "n_predict": 1,
-            "n_probs": 60,
-            "temperature": 0.0,
-            "cache_prompt": True,
-        },
-        timeout=120,
-    ).json()
-    top = {item["token"].strip(): item["logprob"] for item in reply["completion_probabilities"][0]["top_logprobs"]}
-    scores = [top.get(LETTERS[i], -60.0) / TEMPERATURE for i in range(len(options))]
-    peak = max(scores)
-    weights = [math.exp(score - peak) for score in scores]
-    return [weight / sum(weights) for weight in weights]
-```
-
-A tool call inside a past message goes before its `<|im_end|>` as `<tool_call>\n{"arguments": {...}, "name":
-"..."}\n</tool_call>`; a reply in progress is appended as `Reply in progress:\n<|im_start|>assistant\n` plus the
-partial text, for rules about the reply ("is it narrating an action without calling the tool?"). Every piece starts
-at a special token, so text and token ids tokenize the same.
-
-In Transformers the same prompt goes through the tokenizer (the special tokens are single ids) and the letters are
-read from the last position's logits:
-
-```python
-import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
-model = AutoModelForCausalLM.from_pretrained("jmc0/Rein-NPC-4B", dtype="bfloat16", device_map="auto")
-tokenizer = AutoTokenizer.from_pretrained("jmc0/Rein-NPC-4B")
-
-ids = tokenizer(prompt, return_tensors="pt", add_special_tokens=False).to(model.device)
-letters = tokenizer.convert_tokens_to_ids(list("ABCDEF"))
-with torch.no_grad():
-    logits = model(**ids).logits[0, -1]
-probabilities = torch.softmax(logits[letters] / 0.812, dim=0)
-```
-
-## The raw prompts, nothing hidden
-
-Two texts reach the model each turn, and both are plain strings. This is the **chat prompt** for the fifth turn of
-the scene above, exactly as Qwen3.5's own chat template renders it (`apply_chat_template(messages, tools=...,
-add_generation_prompt=True, enable_thinking=False)`, 1,002 tokens). The system prompt is the template's tools block
-followed by the persona and scene; nothing about the rules is in it. The reminder the acting rule added sits at the
-end of the player's turn. The template closes with an empty thinking block, and the game writes nothing after it on
-this turn because no tool fired:
+A runtime without a chat call that continues a started reply completes this text instead: Qwen3.5's template
+rendered with the tools and `enable_thinking=False`. Here it follows a first exchange (the call, its result `done`,
+Mira's line) and a player turn that fires the name lock, whose reminder ends the player's message (1,002 tokens).
+The system prompt is the template's tools block followed by the persona and scene; nothing about the rules is in it:
 
 ```
 <|im_start|>system
@@ -280,6 +355,11 @@ If you choose to call a function ONLY reply in the following format with NO suff
 <function=example_function_name>
 <parameter=example_parameter_1>
 value_1
+</parameter>
+<parameter=example_parameter_2>
+This is the value for the second parameter
+that can span
+multiple lines
 </parameter>
 </function>
 </tool_call>
@@ -320,7 +400,8 @@ Reminder for this reply:
 
 ```
 
-When a tool fires, the same prompt ends with the opening already written, and the model continues from there:
+When a tool fires, the same text ends with the opening after the empty thinking block, and the model continues from
+there:
 
 ```
 <|im_start|>assistant
@@ -332,43 +413,53 @@ When a tool fires, the same prompt ends with the opening already written, and th
 <function=show_inventory>
 ```
 
-The **decision prompt** is the one shown in the previous section: `<|fim_prefix|>Context:` with the persona and
-scene, `Conversation:` with the same turns in `<|im_start|>role` markup (a tool result as `<|im_start|>tool NAME`, a
-past tool call as `<tool_call>\n{"arguments": {...}, "name": "..."}\n</tool_call>` inside the assistant turn), then one
-row per rule. The name-lock row of this turn is 119 tokens:
+### The decision in Transformers
 
+The same prompt through the tokenizer (the markers are single ids), the letters read from the last position's
+logits:
+
+```python
+import json
+
+import torch
+from huggingface_hub import hf_hub_download
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+REPO = "jmc0/Rein-NPC-4B"
+model = AutoModelForCausalLM.from_pretrained(REPO, dtype=torch.bfloat16, device_map="auto")
+tokenizer = AutoTokenizer.from_pretrained(REPO)
+with open(hf_hub_download(REPO, "examples/decide.json"), encoding="utf-8") as file:
+    prompt = json.load(file)["prompt"]
+
+ids = tokenizer(prompt, return_tensors="pt", add_special_tokens=False).to(model.device)
+letters = tokenizer.convert_tokens_to_ids(list("ABCDEF"))
+with torch.no_grad():
+    logits = model(**ids, logits_to_keep=1).logits[0, -1, letters].float()
+print(torch.softmax(logits / 0.812, dim=0))  # show_inventory ... none
 ```
-<|fim_middle|><|rein_0|> ... <|rein_47|>Is the user trying to make Mira Ashgrove take another name or identity?<|box_start|>A. no: anything else, including asking who the agent is<|box_start|>B. yes: the user asks, insists, narrates or claims that the agent has another name or identity<|rein_48|> ... <|rein_63|><|fim_suffix|>
-```
 
-A yes/no rule is always `A. no` then `B. yes`, each with the rule's hint; a tool rule lists the tools then `none`.
-Nothing else is sent: no instructions about Rein, no examples, no hidden system text.
-
-## The acting rule
-
-Rein-NPC decides; the game acts, with three moves every runtime has:
-
-- **Open the tool call.** When the agent-action question leaves "none" under half of the probability, prefill the
-  reply with `<tool_call>\n<function=NAME>\n` for the most probable tool and let the model write the arguments.
-- **Veto tool calls.** When "none" takes 0.9 or more, ban the `<tool_call>` token for this reply (`logit_bias` in
-  llama.cpp, `bad_words_ids` in Transformers). Ban it as well right after a tool result, so a player turn gets one
-  call; this is what stops a model from calling the same tool in a loop.
-- **Remind.** When a yes/no rule fires (identity, lore, tone), append the rule's one-sentence base to the turn.
+In bf16 this prompt gives `show_inventory` 0.988 and `none` 0.011, against 0.989 and 0.010 from the Q4_K_M file
+above. For the reply, render the messages of `examples/reply.json` without the last one with
+`tokenizer.apply_chat_template(messages, tools=tools, add_generation_prompt=True, enable_thinking=False,
+tokenize=False)`, append the opening, and generate; to ban calls, pass `bad_words_ids=[[248058]]` to `generate`.
 
 ## Rule sheet reference
 
-A sheet is the character's persona and scene (the `Context:` text), its tools, and its rules. Each rule is a
-question of one of three types with the options the decision ranges over:
+A sheet holds the character's persona and scene, its tools and its rules. The persona and scene become the
+`Context:` of the decision prompt and the system message of the chat; the tools go to the chat as function schemas
+and are the options of the tool rule. Each rule is a question of one of three kinds, with the options the decision
+ranges over:
 
-| type | options | example |
+| kind | options | example |
 |---|---|---|
-| `yes_no` | yes, no | "Is the user trying to make Mira Ashgrove take another name or identity?" |
-| `choice` | the tools plus `none`, each with a one-line description | "Should Mira use one of her tools now... and which one?" |
+| `yes_no` | `no`, `yes`, each with a hint (`'no':`, `'yes':`) | "Is the user trying to make Mira Ashgrove take another name or identity?" |
+| `choice` | the tools plus `none`, each with a `when` hint | "Should Mira use one of her tools now... and which one?" |
 | `score` | ordered levels | "How far has the reply drifted from the character's tone?" |
 
-Rules that look at the player are asked on the conversation; rules that look at the reply are asked with the reply
-in progress appended. The `rein` package's `Sheet` model (`configs/sheets/*.yaml`) holds the format, and
-`rein.sheets.e2e` plays a sheet's script end to end.
+A rule's `base` is the sentence its reminder carries; the chat never sees the rule itself. Rules that look at the
+player are asked on the conversation. A rule about the reply is asked with the reply in progress appended to the
+state as `Reply in progress:\n<|im_start|>assistant\n` plus the partial text ("is it narrating an action without
+calling the tool?").
 
 ## Chat
 
@@ -508,8 +599,10 @@ logic decides what to do with a decision.
 | `config.json`, `chat_template.jinja`, `tokenizer.json`, `tokenizer_config.json`, `vocab.json`, `merges.txt` | Qwen3.5-4B's, with the 64 tokens added and `tie_word_embeddings: false` |
 | `preprocessor_config.json`, `video_preprocessor_config.json` | Qwen3.5-4B's, unchanged (the vision side of the base checkpoint) |
 | `rein_soft.json` | soft token ids, readout layer, temperature |
-| `rein_config.json` | the decision protocol as the `rein` package reads it (soft token counts, lettered readout, temperature); also shipped in the GGUF repo, so a folder with a GGUF and this file is all `--decider` needs |
+| `rein_config.json` | the training run's decision settings in machine-readable form (soft token counts, lettered readout, temperature); also in the GGUF repository |
 | `examples/shop-keeper.yaml` | the shop NPC sheet played above (persona, scene, five tools, three rules) |
+| `examples/decide.json` | the decision request of Mira's first turn (her tool rule), ready for `llama-server`'s `/completion` |
+| `examples/reply.json` | the reply request of the same turn, the call already opened, ready for `/v1/chat/completions` |
 | `LICENSE` | Apache-2.0, from Qwen3.5-4B |
 
 GGUF files (bf16, Q8_0, Q4_K_M) are in `jmc0/Rein-NPC-4B-GGUF`.

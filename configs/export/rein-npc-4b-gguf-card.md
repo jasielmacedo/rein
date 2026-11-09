@@ -23,9 +23,10 @@ tags:
 
 llama.cpp files of [`jmc0/Rein-NPC-4B`](https://huggingface.co/jmc0/Rein-NPC-4B): Qwen3.5-4B with Rein's decision
 model inside, as 64 trained rows in the embedding table and the base's own table as a separate output head. One
-`llama-server` process chats **and decides**: the chat through `/v1/chat/completions` as with any Qwen3.5-4B, a
-decision through one `/completion` request with `n_probs`. The main card has the shop-NPC example played end to
-end, the decision protocol and the results; this card covers the files and the server. Code:
+`llama-server` process chats **and decides**. Every player turn is two requests to it: a completion of one token
+decides (`/completion` with `n_probs`), then the chat replies (`/v1/chat/completions`, as with any Qwen3.5-4B). The
+main card walks a shop NPC through both, with the raw prompts, the acting rule and a table for other runtimes
+(LLMUnity, the llama.cpp C API, wllama, vLLM); this card covers the files and the server. Code:
 [`jasielmacedo/rein`](https://github.com/jasielmacedo/rein).
 
 ## Files
@@ -35,8 +36,10 @@ end, the decision protocol and the results; this card covers the files and the s
 | `Rein-NPC-4B-Q4_K_M.gguf` | 3.07 GB | the usual choice for games on consumer GPUs and laptops; the end-to-end results on the main card ran on this file |
 | `Rein-NPC-4B-Q8_0.gguf` | 5.16 GB | near-lossless; 8 GB GPUs and up |
 | `Rein-NPC-4B-bf16.gguf` | 9.70 GB | the reference, no quantization loss; 24 GB GPUs |
-| `rein_config.json` | 1 KB | the decision protocol for the `rein` package (soft token counts, lettered readout, temperature): a folder with a GGUF and this file is all `rein.play.server --decider` and `Engine.served` need |
+| `rein_config.json` | 1 KB | the training run's decision settings in machine-readable form (soft token counts, lettered readout, temperature) |
 | `examples/shop-keeper.yaml` | 4 KB | the shop NPC sheet of the main card's example: persona, scene, five tools, three rules |
+| `examples/decide.json` | 3 KB | the decision request of the sheet's first turn (its tool rule), ready for `/completion` |
+| `examples/reply.json` | 4 KB | the reply request of the same turn, the tool call already opened, ready for `/v1/chat/completions` |
 | `web/Rein-NPC-4B-Q4_K_M-0000N-of-00004.gguf` | 4 files, 3.07 GB | the Q4_K_M file split for browsers (one file under 2 GB each, `llama-gguf-split`); wllama loads the first shard and fetches the rest |
 
 ## In the browser
@@ -46,6 +49,9 @@ end, the decision protocol and the results; this card covers the files and the s
 ## Serve
 
 ```bash
+hf download jmc0/Rein-NPC-4B-GGUF Rein-NPC-4B-Q4_K_M.gguf examples/decide.json examples/reply.json \
+  --local-dir rein-npc
+cd rein-npc
 llama-server -m Rein-NPC-4B-Q4_K_M.gguf --host 127.0.0.1 --port 8080 -ngl 99 -c 32768 --parallel 2
 ```
 
@@ -53,29 +59,36 @@ Two or more slots let the chat and the decisions interleave. Qwen3.5-4B has 8 fu
 about 32 KB of KV cache per token, so a 32k context costs about 1 GB per slot on top of the weights; the Q4_K_M file
 with two 16k slots fits in 6 GB.
 
-## Ask a decision
+## One turn, two requests
 
-The prompt is the state (persona and scene, then the conversation in Qwen's turn markup) and one row per rule: 48
-soft tokens, the question, the options after letters, 16 soft tokens, the answer mark. Read the letters in
-`top_logprobs`, divide by 0.812, renormalize. Mira, the shop keeper of the main card, on her first customer:
+**1. Decide.** The prompt is plain text: the state (persona and scene, then the conversation in Qwen's turn markup)
+and one row for the rule (48 soft tokens, the question, the options after letters, 16 soft tokens, the answer mark).
+Ask for one token with its top candidates:
 
 ```bash
-curl -s localhost:8080/completion -H "content-type: application/json" -d @- <<'JSON'
-{
-  "prompt": "<|fim_prefix|>Context:\nI am Mira Ashgrove, keeper of the Ashgrove General Store in the frontier town of Thornwall. [...]\nConversation:\n<|im_start|>user\nAfternoon! Rough road out there. What have you got for sale?<|im_end|>\n<|fim_middle|><|rein_0|><|rein_1|> ... <|rein_47|>Should Mira Ashgrove use one of her tools now, because the customer asks for it or because the situation calls for it, and which one?<|box_start|>A. show_inventory: the customer wants to know what is for sale or how much something costs<|box_start|>B. sell_item: the customer decides to buy something from the stock<|box_start|>C. buy_item: the customer offers to sell Mira something<|box_start|>D. repair_gear: the customer wants a piece of equipment fixed<|box_start|>E. call_guards: someone threatens Mira, draws a weapon, or tries to rob the store<|box_start|>F. none: talk, questions, stories, or requests her tools cannot serve<|rein_48|> ... <|rein_63|><|fim_suffix|>",
-  "n_predict": 1,
-  "n_probs": 60,
-  "temperature": 0,
-  "cache_prompt": true
-}
-JSON
+curl -s localhost:8080/completion -H "content-type: application/json" -d @examples/decide.json
 ```
 
-Write the 64 soft tokens out in full (`...` stands for the ones left out here). The answer is in
-`completion_probabilities[0].top_logprobs`: on this turn the letter `A` (`show_inventory`) carries 0.99 after the
-temperature. In Python, with the `rein` package, the same call and the whole game loop are a few lines
-(`Engine.served(server, folder)` on the main card); without it, the main card's `decide()` is thirty lines of plain
-`httpx`.
+Keep the rule's letters in `completion_probabilities[0].top_logprobs` (`A` is token 32, `B` 33, and so on), divide
+each log-probability by 0.812 and take the softmax over them: on this turn `A` (`show_inventory`) carries 0.99 and
+`F` (`none`) 0.01. Each rule of the sheet is one such request on the same state; `cache_prompt` keeps the state's
+cache between them.
+
+**2. Reply.** The decision opened `show_inventory`, so the chat request ends with the call already started as the
+assistant's last message. `llama-server` continues it and returns the call parsed:
+
+```bash
+curl -s localhost:8080/v1/chat/completions -H "content-type: application/json" -d @examples/reply.json
+```
+
+```json
+{"role": "assistant", "content": "", "tool_calls": [{"type": "function", "function": {"name": "show_inventory", "arguments": "{}"}}]}
+```
+
+When the decision says no tool (`none` at 0.9 or more, or right after a tool result), the chat request carries
+`"logit_bias": {"248058": -100}`, which bans `<tool_call>` for that reply; when a yes/no rule fires, its one-line base
+goes at the end of the player's message. Both files hold the prompts in full: the soft tokens are `<|rein_0|>` to
+`<|rein_63|>`, ids 248077 to 248140, each one token to llama.cpp.
 
 ## What quantization does to the decisions
 

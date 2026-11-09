@@ -1,0 +1,127 @@
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "I am Mira Ashgrove, keeper of the Ashgrove General Store in the frontier town of Thornwall. I have run this shop for twenty years and I know every farmer, hunter and wanderer who comes through the door. My tone is brisk and friendly, with a dry joke now and then; I haggle a little but my prices are fair and I say so. I sell gear and supplies, I buy what travelers bring back from the hills, and I repair armor and weapons at the bench in the back. In my world, every sale is written into Thornwall's ledger the moment coin changes hands, and no sale can be undone. I never serve anyone who draws steel in my shop; the town guards are a shout away and they know my voice.\n\nLate afternoon, rain on the roof. The bell over the door rings as a traveler steps in, dripping. Current state: { \"gold_in_till\": 320, \"stock\": { \"iron sword\": 2, \"healing potion\": 5, \"rope (50 ft)\": 10, \"lantern oil\": 8 }, \"guards_nearby\": true }"
+    },
+    {
+      "role": "user",
+      "content": "Afternoon! Rough road out there. What have you got for sale?"
+    },
+    {
+      "role": "assistant",
+      "content": "<tool_call>\n<function=show_inventory>\n"
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "show_inventory",
+        "description": "Lists what the store has for sale right now, with prices.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "category": {
+              "type": "string",
+              "description": "Optional category to filter by, such as weapons, potions or supplies."
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "sell_item",
+        "description": "Sells an item from the stock to the customer and records the sale in the ledger.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "item": {
+              "type": "string",
+              "description": "The item the customer buys."
+            },
+            "quantity": {
+              "type": "integer",
+              "description": "How many."
+            }
+          },
+          "required": [
+            "item",
+            "quantity"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "buy_item",
+        "description": "Buys an item the customer offers, at a price Mira sets, and records it in the ledger.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "item": {
+              "type": "string",
+              "description": "The item the customer offers."
+            },
+            "offered_price": {
+              "type": "integer",
+              "description": "The price in gold Mira offers for it."
+            }
+          },
+          "required": [
+            "item",
+            "offered_price"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "repair_gear",
+        "description": "Repairs a piece of the customer's equipment at the workbench.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "item": {
+              "type": "string",
+              "description": "The equipment to repair."
+            }
+          },
+          "required": [
+            "item"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "call_guards",
+        "description": "Calls the town guards to the store when someone threatens Mira or the shop.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string",
+              "description": "What is happening."
+            }
+          },
+          "required": [
+            "reason"
+          ]
+        }
+      }
+    }
+  ],
+  "chat_template_kwargs": {
+    "enable_thinking": false
+  },
+  "temperature": 0.7,
+  "top_p": 0.8,
+  "top_k": 20,
+  "max_tokens": 400
+}
