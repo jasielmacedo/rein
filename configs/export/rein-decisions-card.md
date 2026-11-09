@@ -46,6 +46,9 @@ conversation (context, turns with roles and `*narration*`, and sometimes the ass
 operator's rules, each written as a question with its own options and a label. Every record here is synthetic; the
 model cards list all the data the models were trained on.
 
+The code that built and audited these records, and the evaluation suite that scores models on them, is in
+[`jasielmacedo/rein`](https://github.com/jasielmacedo/rein) on GitHub (Apache-2.0).
+
 ## Record format
 
 ```json

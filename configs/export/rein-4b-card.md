@@ -61,6 +61,9 @@ peaked at 13 GB.
 secrets, tool choice and narration attacks. [Rein-r1-0.8B](https://huggingface.co/jmc0/rein-r1-0.8b) needs about 2 GB
 and steered a 4B chat model as well as Rein-r1-4B did in the end-to-end sessions below.
 
+**Code.** The training code, the configs and the evaluation suite are in
+[`jasielmacedo/rein`](https://github.com/jasielmacedo/rein) on GitHub (Apache-2.0).
+
 ## Install
 
 ```bash

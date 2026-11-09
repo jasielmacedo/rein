@@ -44,6 +44,9 @@ call. It answers 95.8% of tool-choice questions correctly on rules it never saw 
 called the needed tool in 93% of cases with Rein against 61% alone, and the right tool in 89% against 53%
 (previous checkpoint of this recipe, see [Results](#results)). See [Enforcing tool calls](#enforcing-tool-calls).
 
+**Code.** The training code, the configs and the evaluation suite are in
+[`jasielmacedo/rein`](https://github.com/jasielmacedo/rein) on GitHub (Apache-2.0).
+
 ## Install
 
 ```bash
